@@ -5,11 +5,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,17 +25,21 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.senyor_o.firebasechat.presentation.components.RoundedButton
 import com.senyor_o.firebasechat.presentation.components.SocialMediaButton
 import com.senyor_o.firebasechat.presentation.components.TransparentTextField
 import com.senyor_o.firebasechat.ui.theme.FACEBOOKCOLOR
-import com.senyor_o.firebasechat.ui.theme.FirebaseChatTheme
 import com.senyor_o.firebasechat.ui.theme.GMAILCOLOR
+import dev.leonardom.loginjetpackcompose.presentation.components.EventDialog
 
 @Composable
-fun RegistrationScreen() {
+fun RegistrationScreen(
+    state: RegisterState,
+    onRegister: (String, String, String, String, String) -> Unit,
+    onBack: () -> Unit,
+    onDismissDialog: () -> Unit
+) {
 
     val nameValue = remember { mutableStateOf("") }
     val emailValue = remember { mutableStateOf("") }
@@ -49,7 +53,7 @@ fun RegistrationScreen() {
     val focusManager = LocalFocusManager.current
 
     Box(
-        modifier = Modifier.fillMaxWidth()
+      modifier = Modifier.fillMaxWidth()
     ){
         Column(modifier = Modifier
             .fillMaxSize()
@@ -61,20 +65,20 @@ fun RegistrationScreen() {
             ){
                 IconButton(
                     onClick = {
-                        // TODO("BACK BUTOON")
+                        onBack()
                     }
                 ) {
                     Icon(
                         imageVector = Icons.Default.ArrowBack,
                         contentDescription = "Back Icon",
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = MaterialTheme.colors.primary
                     )
                 }
 
                 Text(
                     text = "Create An Account",
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        color = MaterialTheme.colorScheme.primary
+                    style = MaterialTheme.typography.h5.copy(
+                        color = MaterialTheme.colors.primary
                     )
                 )
             }
@@ -150,7 +154,14 @@ fun RegistrationScreen() {
                     keyboardActions = KeyboardActions(
                         onDone = {
                             focusManager.clearFocus()
-                            // TODO("REGISTRATION")
+
+                            onRegister(
+                                nameValue.value,
+                                emailValue.value,
+                                phoneValue.value,
+                                passwordValue.value,
+                                confirmPasswordValue.value
+                            )
                         }
                     ),
                     imeAction = ImeAction.Done,
@@ -173,9 +184,15 @@ fun RegistrationScreen() {
 
                 RoundedButton(
                     text = "Sign Up",
-                    displayProgressBar = false,
+                    displayProgressBar = state.displayProgressBar,
                     onClick = {
-                        // TODO("REGISTER")
+                        onRegister(
+                            nameValue.value,
+                            emailValue.value,
+                            phoneValue.value,
+                            passwordValue.value,
+                            confirmPasswordValue.value
+                        )
                     }
                 )
 
@@ -185,7 +202,7 @@ fun RegistrationScreen() {
 
                         withStyle(
                             style = SpanStyle(
-                                color = MaterialTheme.colorScheme.primary,
+                                color = MaterialTheme.colors.primary,
                                 fontWeight = FontWeight.Bold
                             )
                         ){
@@ -193,7 +210,7 @@ fun RegistrationScreen() {
                         }
                     },
                     onClick = {
-                        // TODO("BACK")
+                        onBack()
                     }
                 )
             }
@@ -215,7 +232,7 @@ fun RegistrationScreen() {
                     Text(
                         modifier = Modifier.padding(8.dp),
                         text = "OR",
-                        style = MaterialTheme.typography.headlineSmall.copy(
+                        style = MaterialTheme.typography.h6.copy(
                             fontWeight = FontWeight.Black
                         )
                     )
@@ -230,8 +247,8 @@ fun RegistrationScreen() {
                 Text(
                     modifier = Modifier.fillMaxWidth(),
                     text = "Login with",
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        MaterialTheme.colorScheme.primary
+                    style = MaterialTheme.typography.body1.copy(
+                        MaterialTheme.colors.primary
                     ),
                     textAlign = TextAlign.Center
                 )
@@ -258,13 +275,9 @@ fun RegistrationScreen() {
             }
 
         }
-    }
-}
 
-@Preview(showBackground = true)
-@Composable
-fun RegistrationScreenPreview() {
-    FirebaseChatTheme {
-        RegistrationScreen()
+        if(state.errorMessage != null) {
+            EventDialog(errorMessage = state.errorMessage, onDismiss = onDismissDialog)
+        }
     }
 }

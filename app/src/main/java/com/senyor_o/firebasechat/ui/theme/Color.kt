@@ -9,7 +9,7 @@ val Blue500 = Color(0xFF2196f3)  // Primary
 val BLUE800 = Color(0xFF0277BD)  // PrimaryVariant
 val CYAN500 = Color(0xFF00bcd4)  // Secondary
 val CYAN700 = Color(0xff008ba3)  // SecondaryVariant
-val LIGHTBLUE50 = Color(0xff039BE5)  // Background
+val FIREBASE_BLUE = Color(0xff039BE5)  // Background
 val LIGHTBLUE100 = Color(0xffb3e5fc)  // Surface
 val RED600 = Color(0xffe53935)  //Error
 

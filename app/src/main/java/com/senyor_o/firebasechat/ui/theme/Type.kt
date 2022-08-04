@@ -1,6 +1,6 @@
 package com.senyor_o.firebasechat.ui.theme
 
-import androidx.compose.material3.Typography
+import androidx.compose.material.Typography
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -20,79 +20,69 @@ val Montserrat = FontFamily(
 )
 
 val Typography = Typography(
-    displayLarge = TextStyle(
+    h1 = TextStyle(
         fontFamily = Montserrat,
         fontWeight = FontWeight.Light,
         fontSize = 82.sp
     ),
-    displayMedium = TextStyle(
+    h2 = TextStyle(
         fontFamily = Montserrat,
         fontWeight = FontWeight.Light,
         fontSize = 51.sp
     ),
-    displaySmall = TextStyle(
+    h3 = TextStyle(
         fontFamily = Montserrat,
         fontWeight = FontWeight.Normal,
         fontSize = 41.sp
     ),
-    headlineLarge = TextStyle(
+    h4 = TextStyle(
         fontFamily = Montserrat,
         fontWeight = FontWeight.Normal,
         fontSize = 29.sp
     ),
-    headlineMedium = TextStyle(
+    h5 = TextStyle(
         fontFamily = Montserrat,
         fontWeight = FontWeight.Normal,
         fontSize = 21.sp
     ),
-    headlineSmall = TextStyle(
+    h6 = TextStyle(
         fontFamily = Montserrat,
         fontWeight = FontWeight.Medium,
         fontSize = 17.sp
     ),
-    titleLarge = TextStyle(
+    subtitle1 = TextStyle(
         fontFamily = Montserrat,
         fontWeight = FontWeight.Normal,
         fontSize = 14.sp
     ),
-    titleMedium = TextStyle(
+    subtitle2 = TextStyle(
         fontFamily = Montserrat,
         fontWeight = FontWeight.Medium,
         fontSize = 12.sp
     ),
-    titleSmall = TextStyle(
+    body1 = TextStyle(
+        fontFamily = Montserrat,
+        fontWeight = FontWeight.Normal,
+        fontSize = 14.sp
+    ),
+    body2 = TextStyle(
+        fontFamily = Montserrat,
+        fontWeight = FontWeight.Normal,
+        fontSize = 12.sp
+    ),
+    button = TextStyle(
         fontFamily = Montserrat,
         fontWeight = FontWeight.Medium,
+        fontSize = 16.sp
+    ),
+    caption = TextStyle(
+        fontFamily = Montserrat,
+        fontWeight = FontWeight.Normal,
         fontSize = 10.sp
     ),
-    bodyLarge = TextStyle(
+    overline = TextStyle(
         fontFamily = Montserrat,
         fontWeight = FontWeight.Normal,
-        fontSize = 14.sp
-    ),
-    bodyMedium = TextStyle(
-        fontFamily = Montserrat,
-        fontWeight = FontWeight.Normal,
-        fontSize = 12.sp
-    ),
-    bodySmall = TextStyle(
-        fontFamily = Montserrat,
-        fontWeight = FontWeight.Normal,
-        fontSize = 10.sp
-    ),
-    labelLarge = TextStyle(
-        fontFamily = Montserrat,
-        fontWeight = FontWeight.Medium,
-        fontSize = 14.sp
-    ),
-    labelMedium = TextStyle(
-        fontFamily = Montserrat,
-        fontWeight = FontWeight.Medium,
-        fontSize = 12.sp
-    ),
-    labelSmall = TextStyle(
-        fontFamily = Montserrat,
-        fontWeight = FontWeight.Medium,
-        fontSize = 11.sp
+        fontSize = 9.sp
     )
 )
