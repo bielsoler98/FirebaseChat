@@ -35,8 +35,7 @@ fun TransparentTextField(
 ) {
     TextField(
         modifier = modifier
-            .fillMaxWidth()
-            .background(Color.Transparent),
+            .fillMaxWidth(),
         value = textFieldValue.value.take(maxChar ?: 40),
         onValueChange = { textFieldValue.value = it },
         label = {
@@ -49,7 +48,10 @@ fun TransparentTextField(
             imeAction = imeAction
         ),
         keyboardActions = keyboardActions,
-        visualTransformation = visualTransformation
+        visualTransformation = visualTransformation,
+        colors = TextFieldDefaults.textFieldColors(
+            containerColor = Color.Transparent
+        )
     )
 }
 

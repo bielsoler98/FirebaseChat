@@ -1,5 +1,6 @@
 package com.senyor_o.firebasechat.presentation.registration
 
+import android.content.Context
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.ClickableText
@@ -23,32 +24,25 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.senyor_o.firebasechat.presentation.components.RoundedButton
-import com.senyor_o.firebasechat.presentation.components.SocialMediaButton
 import com.senyor_o.firebasechat.presentation.components.TransparentTextField
-import com.senyor_o.firebasechat.ui.theme.FACEBOOKCOLOR
-import com.senyor_o.firebasechat.ui.theme.GMAILCOLOR
 import com.senyor_o.firebasechat.presentation.components.EventDialog
-import com.senyor_o.firebasechat.presentation.login.LoginScreen
-import com.senyor_o.firebasechat.presentation.login.LoginState
 import com.senyor_o.firebasechat.ui.theme.FirebaseChatTheme
 
 @ExperimentalMaterial3Api
 @Composable
 fun RegistrationScreen(
     state: RegisterState,
-    onRegister: (String, String, String, String, String) -> Unit,
+    onRegister: (String, String, String, String) -> Unit,
     onBack: () -> Unit,
     onDismissDialog: () -> Unit
 ) {
 
     val nameValue = remember { mutableStateOf("") }
     val emailValue = remember { mutableStateOf("") }
-    val phoneValue = remember { mutableStateOf("") }
     val passwordValue = remember { mutableStateOf("") }
     val confirmPasswordValue = remember { mutableStateOf("") }
 
@@ -117,17 +111,6 @@ fun RegistrationScreen(
                 )
 
                 TransparentTextField(
-                    textFieldValue = phoneValue,
-                    textLabel = "Phone Number",
-                    maxChar = 10,
-                    keyboardType = KeyboardType.Phone,
-                    keyboardActions = KeyboardActions(
-                        onNext = { focusManager.moveFocus(FocusDirection.Down) }
-                    ),
-                    imeAction = ImeAction.Next
-                )
-
-                TransparentTextField(
                     textFieldValue = passwordValue,
                     textLabel = "Password",
                     keyboardType = KeyboardType.Password,
@@ -163,7 +146,6 @@ fun RegistrationScreen(
                             onRegister(
                                 nameValue.value,
                                 emailValue.value,
-                                phoneValue.value,
                                 passwordValue.value,
                                 confirmPasswordValue.value
                             )
@@ -194,7 +176,6 @@ fun RegistrationScreen(
                         onRegister(
                             nameValue.value,
                             emailValue.value,
-                            phoneValue.value,
                             passwordValue.value,
                             confirmPasswordValue.value
                         )
@@ -203,7 +184,7 @@ fun RegistrationScreen(
 
                 ClickableText(
                     text = buildAnnotatedString {
-                        append("Already have an account?")
+                        append("Already have an account? ")
 
                         withStyle(
                             style = SpanStyle(
@@ -219,66 +200,6 @@ fun RegistrationScreen(
                     }
                 )
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ){
-                    Divider(
-                        modifier = Modifier.width(24.dp),
-                        thickness = 1.dp,
-                        color = Color.Gray
-                    )
-
-                    Text(
-                        modifier = Modifier.padding(8.dp),
-                        text = "OR",
-                        style = MaterialTheme.typography.headlineSmall.copy(
-                            fontWeight = FontWeight.Black
-                        )
-                    )
-
-                    Divider(
-                        modifier = Modifier.width(24.dp),
-                        thickness = 1.dp,
-                        color = Color.Gray
-                    )
-                }
-
-                Text(
-                    modifier = Modifier.fillMaxWidth(),
-                    text = "Login with",
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        MaterialTheme.colorScheme.primary
-                    ),
-                    textAlign = TextAlign.Center
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ){
-                SocialMediaButton(
-                    text = "Login with Facebook",
-                    onClick = {  },
-                    socialMediaColor = FACEBOOKCOLOR
-                )
-
-                SocialMediaButton(
-                    text = "Login with Gmail",
-                    onClick = { },
-                    socialMediaColor = GMAILCOLOR
-                )
-            }
-
         }
 
         if(state.errorMessage != null) {
@@ -294,7 +215,7 @@ fun RegistrationScreenPreview() {
     FirebaseChatTheme {
         RegistrationScreen(
             state = RegisterState(),
-            onRegister = { _ , _, _, _, _  -> },
+            onRegister = { _ , _, _, _  -> },
             onBack = {},
             onDismissDialog = {  }
         )

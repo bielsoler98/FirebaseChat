@@ -26,7 +26,7 @@ fun EventDialog(
 ) {
     AlertDialog(
         modifier = modifier
-            .background(Color.White)
+            .background(Color.Transparent)
             .padding(16.dp),
         onDismissRequest = { onDismiss?.invoke() },
         title = {

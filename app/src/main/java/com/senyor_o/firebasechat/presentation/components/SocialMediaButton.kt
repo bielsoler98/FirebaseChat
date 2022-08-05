@@ -26,11 +26,11 @@ fun SocialMediaButton(
     OutlinedButton(
         modifier = Modifier
             .width(280.dp)
-            .height(50.dp)
-            .background(Color.Transparent),
+            .height(50.dp),
         onClick = onClick,
         shape = RoundedCornerShape(50),
         colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = Color.Transparent,
             contentColor = socialMediaColor
         ),
         border = BorderStroke(

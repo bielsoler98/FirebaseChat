@@ -4,6 +4,7 @@ plugins {
     id 'kotlin-parcelize'
     id 'kotlin-kapt'
     id 'dagger.hilt.android.plugin'
+    id 'com.google.gms.google-services'
 }
 
 android {
@@ -99,4 +100,9 @@ dependencies {
 
     // Accompanist
     implementation "com.google.accompanist:accompanist-navigation-animation:0.25.0"
+
+    //Firebase
+    implementation platform('com.google.firebase:firebase-bom:30.3.0')
+    implementation 'com.google.firebase:firebase-analytics-ktx'
+    implementation 'com.google.firebase:firebase-auth-ktx'
 }

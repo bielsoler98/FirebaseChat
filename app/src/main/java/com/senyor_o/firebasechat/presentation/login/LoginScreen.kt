@@ -1,5 +1,6 @@
 package com.senyor_o.firebasechat.presentation.login
 
+import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -11,17 +12,14 @@ import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
@@ -40,7 +38,11 @@ import com.senyor_o.firebasechat.R
 import com.senyor_o.firebasechat.presentation.components.RoundedButton
 import com.senyor_o.firebasechat.presentation.components.TransparentTextField
 import com.senyor_o.firebasechat.presentation.components.EventDialog
+import com.senyor_o.firebasechat.presentation.components.SocialMediaButton
+import com.senyor_o.firebasechat.ui.theme.FACEBOOKCOLOR
 import com.senyor_o.firebasechat.ui.theme.FirebaseChatTheme
+import com.senyor_o.firebasechat.ui.theme.GMAILCOLOR
+import com.senyor_o.firebasechat.utility.session
 
 @ExperimentalMaterial3Api
 @Composable
@@ -50,7 +52,6 @@ fun LoginScreen(
     onNavigateToRegister: () -> Unit,
     onDismissDialog: () -> Unit
 ) {
-
     val emailValue = rememberSaveable{ mutableStateOf("") }
     val passwordValue = rememberSaveable{ mutableStateOf("") }
     var passwordVisibility by remember { mutableStateOf(false) }
@@ -78,7 +79,7 @@ fun LoginScreen(
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(400.dp)
+                        .height(550.dp)
                         .constrainAs(surface) {
                             bottom.linkTo(parent.bottom)
                         },
@@ -182,10 +183,67 @@ fun LoginScreen(
                                     onLogin(emailValue.value, passwordValue.value)
                                 }
                             )
+                        }
+
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ){
+                                Divider(
+                                    modifier = Modifier.width(24.dp),
+                                    thickness = 1.dp,
+                                    color = Color.Gray
+                                )
+
+                                Text(
+                                    modifier = Modifier.padding(8.dp),
+                                    text = "OR",
+                                    style = MaterialTheme.typography.headlineSmall.copy(
+                                        fontWeight = FontWeight.Black
+                                    )
+                                )
+
+                                Divider(
+                                    modifier = Modifier.width(24.dp),
+                                    thickness = 1.dp,
+                                    color = Color.Gray
+                                )
+                            }
+
+                            Text(
+                                modifier = Modifier.fillMaxWidth(),
+                                text = "Login with",
+                                style = MaterialTheme.typography.bodyLarge.copy(
+                                    MaterialTheme.colorScheme.primary
+                                ),
+                                textAlign = TextAlign.Center
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ){
+                            SocialMediaButton(
+                                text = "Login with Facebook",
+                                onClick = {  },
+                                socialMediaColor = FACEBOOKCOLOR
+                            )
+
+                            SocialMediaButton(
+                                text = "Login with Gmail",
+                                onClick = { },
+                                socialMediaColor = GMAILCOLOR
+                            )
 
                             ClickableText(
                                 text = buildAnnotatedString {
-                                    append("Do not have an Account?")
+                                    append("Do not have an Account? ")
 
                                     withStyle(
                                         style = SpanStyle(
@@ -209,11 +267,11 @@ fun LoginScreen(
                         .constrainAs(fab) {
                             top.linkTo(surface.top, margin = (-36).dp)
                             end.linkTo(surface.end, margin = 36.dp)
-                        }
-                        .background(MaterialTheme.colorScheme.primary),
+                        },
                     onClick = {
                         onNavigateToRegister()
-                    }
+                    },
+                    containerColor = MaterialTheme.colorScheme.primary
                 ) {
                     Icon(
                         modifier = Modifier.size(42.dp),
@@ -242,7 +300,7 @@ fun LoginScreenPreview() {
         LoginScreen(
             state = LoginState(),
             onLogin = { _ , _  -> },
-            onNavigateToRegister = {},
+            onNavigateToRegister = { },
             onDismissDialog = {  }
         )
     }

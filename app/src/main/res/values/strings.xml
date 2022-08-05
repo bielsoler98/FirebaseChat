@@ -6,6 +6,8 @@
     <string name="error_incorrectly_repeated_password">The passwords do not match</string>
     <string name="error_invalid_credentials">The E-Mail or password is incorrect</string>
     <string name="success_registration">Successfully registered new user</string>
+    <string name="error_occurred">An error occurred</string>
     <string name="success_login">Successfully logged in</string>
     <string name="error_unknown">An unknown error occurred</string>
+    <string name="prefs_file">com.senyor_o.firebasechat.PREFERENCE_FILE_KEY</string>
 </resources>

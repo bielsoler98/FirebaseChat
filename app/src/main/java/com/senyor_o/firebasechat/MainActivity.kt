@@ -10,6 +10,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -18,10 +19,13 @@ import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.senyor_o.firebasechat.navigation.Destinations
 import com.senyor_o.firebasechat.presentation.home.HomeScreen
+import com.senyor_o.firebasechat.presentation.home.HomeViewModel
 import com.senyor_o.firebasechat.presentation.login.LoginScreen
 import com.senyor_o.firebasechat.presentation.login.LoginViewModel
 import com.senyor_o.firebasechat.presentation.registration.RegisterViewModel
 import com.senyor_o.firebasechat.presentation.registration.RegistrationScreen
+import com.senyor_o.firebasechat.presentation.splash.SplashScreen
+import com.senyor_o.firebasechat.presentation.splash.SplashViewModel
 import com.senyor_o.firebasechat.ui.theme.FirebaseChatTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -39,16 +43,81 @@ class MainActivity : ComponentActivity() {
                 BoxWithConstraints {
                     AnimatedNavHost(
                         navController = navController,
-                        startDestination = Destinations.Login.route
+                        startDestination = Destinations.Splash.route
                     ){
+                        addSplash(navController)
+
                         addLogin(navController)
 
                         addRegister(navController)
 
-                        addHome()
+                        addHome(navController)
                     }
                 }
             }
+        }
+    }
+}
+
+@ExperimentalMaterial3Api
+@ExperimentalAnimationApi
+fun NavGraphBuilder.addSplash(
+    navController: NavHostController
+){
+    composable(
+        route = Destinations.Splash.route,
+        enterTransition = {
+            slideInHorizontally(
+                initialOffsetX = { 1000 },
+                animationSpec = tween(500)
+            )
+        },
+        exitTransition = {
+            slideOutHorizontally(
+                targetOffsetX = { -1000 },
+                animationSpec = tween(500)
+            )
+        },
+        popEnterTransition = {
+            slideInHorizontally(
+                initialOffsetX = { -1000 },
+                animationSpec = tween(500)
+            )
+        },
+        popExitTransition = {
+            slideOutHorizontally(
+                targetOffsetX = { 1000 },
+                animationSpec = tween(500)
+            )
+        }
+    ){
+        val viewModel: SplashViewModel = hiltViewModel()
+        val email = viewModel.state.value.email
+
+        if (viewModel.state.value.sessionRetrieved) {
+            if(viewModel.state.value.successSession){
+                LaunchedEffect(key1 = Unit){
+                    navController.navigate(
+                        Destinations.Home.route + "/$email"
+                    ){
+                        popUpTo(Destinations.Splash.route){
+                            inclusive = true
+                        }
+                    }
+                }
+            } else {
+                LaunchedEffect(key1 = Unit){
+                    navController.navigate(
+                        Destinations.Login.route
+                    ){
+                        popUpTo(Destinations.Splash.route){
+                            inclusive = true
+                        }
+                    }
+                }
+            }
+        } else {
+            SplashScreen(onEnter = viewModel::validateSession)
         }
     }
 }
@@ -87,12 +156,11 @@ fun NavGraphBuilder.addLogin(
     ){
         val viewModel: LoginViewModel = hiltViewModel()
         val email = viewModel.state.value.email
-        val password = viewModel.state.value.password
 
         if(viewModel.state.value.successLogin){
             LaunchedEffect(key1 = Unit){
                 navController.navigate(
-                    Destinations.Home.route + "/$email" + "/$password"
+                    Destinations.Home.route + "/$email"
                 ){
                     popUpTo(Destinations.Login.route){
                         inclusive = true
@@ -106,7 +174,7 @@ fun NavGraphBuilder.addLogin(
                 onNavigateToRegister = {
                     navController.navigate(Destinations.Register.route)
                 },
-                onDismissDialog = viewModel::hideErrorDialog
+                onDismissDialog = viewModel::hideErrorDialog,
             )
         }
     }
@@ -145,29 +213,81 @@ fun NavGraphBuilder.addRegister(
         }
     ){
         val viewModel: RegisterViewModel = hiltViewModel()
-
-        RegistrationScreen(
-            state = viewModel.state.value,
-            onRegister = viewModel::register,
-            onBack = {
-                navController.popBackStack()
-            },
-            onDismissDialog = viewModel::hideErrorDialog
-        )
+        val email = viewModel.state.value.email
+        if(viewModel.state.value.successRegister){
+            LaunchedEffect(key1 = Unit){
+                navController.navigate(
+                    Destinations.Home.route + "/$email"
+                ){
+                    popUpTo(Destinations.Login.route){
+                        inclusive = true
+                    }
+                }
+            }
+        } else {
+            RegistrationScreen(
+                state = viewModel.state.value,
+                onRegister = viewModel::register,
+                onBack = {
+                    navController.popBackStack()
+                },
+                onDismissDialog = viewModel::hideErrorDialog
+            )
+        }
     }
 }
 
 @ExperimentalAnimationApi
-fun NavGraphBuilder.addHome() {
+fun NavGraphBuilder.addHome(
+    navController: NavHostController
+) {
     composable(
-        route = Destinations.Home.route + "/{email}" + "/{password}",
-        arguments = Destinations.Home.arguments
-    ){ backStackEntry ->
-
+        route = Destinations.Home.route  + "/{email}",
+        enterTransition = {
+            slideInHorizontally(
+                initialOffsetX = { 1000 },
+                animationSpec = tween(500)
+            )
+        },
+        exitTransition = {
+            slideOutHorizontally(
+                targetOffsetX = { -1000 },
+                animationSpec = tween(500)
+            )
+        },
+        popEnterTransition = {
+            slideInHorizontally(
+                initialOffsetX = { -1000 },
+                animationSpec = tween(500)
+            )
+        },
+        popExitTransition = {
+            slideOutHorizontally(
+                targetOffsetX = { 1000 },
+                animationSpec = tween(500)
+            )
+        }
+    ){ backStackEntry->
+        val viewModel: HomeViewModel = hiltViewModel()
         val email = backStackEntry.arguments?.getString("email") ?: ""
-        val password = backStackEntry.arguments?.getString("password") ?: ""
-
-        HomeScreen(email, password)
+        viewModel.state.value = viewModel.state.value.copy(email = email)
+        if(viewModel.state.value.successLogOut){
+            LaunchedEffect(key1 = Unit){
+                navController.navigate(
+                    Destinations.Login.route
+                ){
+                    popUpTo(Destinations.Home.route){
+                        inclusive = true
+                    }
+                }
+            }
+        } else {
+            HomeScreen(
+                state = viewModel.state.value,
+                onLogOut = viewModel::logOut,
+                onEnter = viewModel::saveCredentials
+            )
+        }
     }
 }
 
