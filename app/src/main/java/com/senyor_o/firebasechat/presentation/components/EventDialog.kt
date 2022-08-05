@@ -1,17 +1,22 @@
-package dev.leonardom.loginjetpackcompose.presentation.components
+package com.senyor_o.firebasechat.presentation.components
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.senyor_o.firebasechat.R
 
 @Composable
 fun EventDialog(
@@ -28,7 +33,7 @@ fun EventDialog(
             Text(
                 "Error",
                 style = TextStyle(
-                    color = MaterialTheme.colors.onSurface,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -38,12 +43,12 @@ fun EventDialog(
             Text(
                 text = LocalContext.current.getString(errorMessage),
                 style = TextStyle(
-                    color = MaterialTheme.colors.onSurface,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 16.sp
                 )
             )
         },
-        buttons = {
+        confirmButton = {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -51,9 +56,18 @@ fun EventDialog(
                 horizontalArrangement = Arrangement.End
             ) {
                 TextButton(onClick = { onDismiss?.invoke() }) {
-                    Text(text = "Aceptar", style = MaterialTheme.typography.button)
+                    Text(text = "Aceptar", style = MaterialTheme.typography.bodyMedium)
                 }
             }
         }
+    )
+}
+
+@Preview
+@Composable
+fun EventDialogPreview() {
+    EventDialog(
+     errorMessage =  R.string.error_not_a_valid_email,
+        onDismiss = {}
     )
 }

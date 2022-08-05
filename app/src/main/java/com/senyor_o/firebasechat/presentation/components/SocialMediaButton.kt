@@ -1,17 +1,20 @@
 package com.senyor_o.firebasechat.presentation.components
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedButton
-import androidx.compose.material.Text
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.senyor_o.firebasechat.ui.theme.GMAILCOLOR
 
 @Composable
 fun SocialMediaButton(
@@ -23,11 +26,11 @@ fun SocialMediaButton(
     OutlinedButton(
         modifier = Modifier
             .width(280.dp)
-            .height(50.dp),
+            .height(50.dp)
+            .background(Color.Transparent),
         onClick = onClick,
         shape = RoundedCornerShape(50),
         colors = ButtonDefaults.outlinedButtonColors(
-            backgroundColor = Color.Transparent,
             contentColor = socialMediaColor
         ),
         border = BorderStroke(
@@ -37,11 +40,21 @@ fun SocialMediaButton(
     ) {
         Text(
             text = text,
-            style = MaterialTheme.typography.h6.copy(
+            style = MaterialTheme.typography.headlineSmall.copy(
                 color = socialMediaColor
             )
         )
     }
+}
+
+@Preview
+@Composable
+fun SocialMediaButtonPreview() {
+    SocialMediaButton(
+        text = "Login with Gmail",
+        onClick = { },
+        socialMediaColor = GMAILCOLOR
+    )
 }
 
 

@@ -6,11 +6,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,13 +33,16 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
 import com.senyor_o.firebasechat.R
 import com.senyor_o.firebasechat.presentation.components.RoundedButton
 import com.senyor_o.firebasechat.presentation.components.TransparentTextField
-import dev.leonardom.loginjetpackcompose.presentation.components.EventDialog
+import com.senyor_o.firebasechat.presentation.components.EventDialog
+import com.senyor_o.firebasechat.ui.theme.FirebaseChatTheme
 
+@ExperimentalMaterial3Api
 @Composable
 fun LoginScreen(
     state: LoginState,
@@ -56,7 +59,7 @@ fun LoginScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colors.background)
+            .background(MaterialTheme.colorScheme.background)
     ){
         Image(
             painter = painterResource(id = R.drawable.logo),
@@ -93,15 +96,15 @@ fun LoginScreen(
                     ){
                         Text(
                             text = "Welcome Back!",
-                            style = MaterialTheme.typography.h4.copy(
+                            style = MaterialTheme.typography.headlineLarge.copy(
                                 fontWeight = FontWeight.Medium
                             )
                         )
 
                         Text(
                             text = "Login to your Account",
-                            style = MaterialTheme.typography.h5.copy(
-                                color = MaterialTheme.colors.primary
+                            style = MaterialTheme.typography.headlineMedium.copy(
+                                color = MaterialTheme.colorScheme.primary
                             )
                         )
 
@@ -162,7 +165,7 @@ fun LoginScreen(
                             Text(
                                 modifier = Modifier.fillMaxWidth(),
                                 text = "Forgot Password?",
-                                style = MaterialTheme.typography.body1,
+                                style = MaterialTheme.typography.bodyLarge,
                                 textAlign = TextAlign.End
                             )
                         }
@@ -186,7 +189,7 @@ fun LoginScreen(
 
                                     withStyle(
                                         style = SpanStyle(
-                                            color = MaterialTheme.colors.primary,
+                                            color = MaterialTheme.colorScheme.primary,
                                             fontWeight = FontWeight.Bold
                                         )
                                     ){
@@ -206,8 +209,8 @@ fun LoginScreen(
                         .constrainAs(fab) {
                             top.linkTo(surface.top, margin = (-36).dp)
                             end.linkTo(surface.end, margin = 36.dp)
-                        },
-                    backgroundColor = MaterialTheme.colors.primary,
+                        }
+                        .background(MaterialTheme.colorScheme.primary),
                     onClick = {
                         onNavigateToRegister()
                     }
@@ -231,6 +234,19 @@ fun LoginScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview(showBackground = true)
+@Composable
+fun LoginScreenPreview() {
+    FirebaseChatTheme {
+        LoginScreen(
+            state = LoginState(),
+            onLogin = { _ , _  -> },
+            onNavigateToRegister = {},
+            onDismissDialog = {  }
+        )
+    }
+}
 
 
 

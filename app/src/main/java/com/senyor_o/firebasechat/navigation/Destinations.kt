@@ -1,6 +1,6 @@
 package com.senyor_o.firebasechat.navigation
 
-import androidx.navigation.compose.NamedNavArgument
+import androidx.navigation.NamedNavArgument
 
 sealed class Destinations(
     val route: String,

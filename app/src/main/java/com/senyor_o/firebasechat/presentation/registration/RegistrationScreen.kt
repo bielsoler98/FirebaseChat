@@ -5,11 +5,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -25,14 +25,19 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.senyor_o.firebasechat.presentation.components.RoundedButton
 import com.senyor_o.firebasechat.presentation.components.SocialMediaButton
 import com.senyor_o.firebasechat.presentation.components.TransparentTextField
 import com.senyor_o.firebasechat.ui.theme.FACEBOOKCOLOR
 import com.senyor_o.firebasechat.ui.theme.GMAILCOLOR
-import dev.leonardom.loginjetpackcompose.presentation.components.EventDialog
+import com.senyor_o.firebasechat.presentation.components.EventDialog
+import com.senyor_o.firebasechat.presentation.login.LoginScreen
+import com.senyor_o.firebasechat.presentation.login.LoginState
+import com.senyor_o.firebasechat.ui.theme.FirebaseChatTheme
 
+@ExperimentalMaterial3Api
 @Composable
 fun RegistrationScreen(
     state: RegisterState,
@@ -71,14 +76,14 @@ fun RegistrationScreen(
                     Icon(
                         imageVector = Icons.Default.ArrowBack,
                         contentDescription = "Back Icon",
-                        tint = MaterialTheme.colors.primary
+                        tint = MaterialTheme.colorScheme.primary
                     )
                 }
 
                 Text(
                     text = "Create An Account",
-                    style = MaterialTheme.typography.h5.copy(
-                        color = MaterialTheme.colors.primary
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        color = MaterialTheme.colorScheme.primary
                     )
                 )
             }
@@ -202,7 +207,7 @@ fun RegistrationScreen(
 
                         withStyle(
                             style = SpanStyle(
-                                color = MaterialTheme.colors.primary,
+                                color = MaterialTheme.colorScheme.primary,
                                 fontWeight = FontWeight.Bold
                             )
                         ){
@@ -232,7 +237,7 @@ fun RegistrationScreen(
                     Text(
                         modifier = Modifier.padding(8.dp),
                         text = "OR",
-                        style = MaterialTheme.typography.h6.copy(
+                        style = MaterialTheme.typography.headlineSmall.copy(
                             fontWeight = FontWeight.Black
                         )
                     )
@@ -247,8 +252,8 @@ fun RegistrationScreen(
                 Text(
                     modifier = Modifier.fillMaxWidth(),
                     text = "Login with",
-                    style = MaterialTheme.typography.body1.copy(
-                        MaterialTheme.colors.primary
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        MaterialTheme.colorScheme.primary
                     ),
                     textAlign = TextAlign.Center
                 )
@@ -279,5 +284,19 @@ fun RegistrationScreen(
         if(state.errorMessage != null) {
             EventDialog(errorMessage = state.errorMessage, onDismiss = onDismissDialog)
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview(showBackground = true)
+@Composable
+fun RegistrationScreenPreview() {
+    FirebaseChatTheme {
+        RegistrationScreen(
+            state = RegisterState(),
+            onRegister = { _ , _, _, _, _  -> },
+            onBack = {},
+            onDismissDialog = {  }
+        )
     }
 }

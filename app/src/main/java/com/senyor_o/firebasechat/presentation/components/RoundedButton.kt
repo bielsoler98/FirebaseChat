@@ -4,14 +4,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Button
-import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.senyor_o.firebasechat.R
 
 @Composable
 fun RoundedButton(
@@ -28,7 +30,7 @@ fun RoundedButton(
         ) {
             Text(
                 text = text,
-                style = MaterialTheme.typography.h6.copy(
+                style = MaterialTheme.typography.headlineSmall.copy(
                     color = Color.White
                 )
             )
@@ -36,8 +38,17 @@ fun RoundedButton(
     } else {
         CircularProgressIndicator(
             modifier = Modifier.size(50.dp),
-            color = MaterialTheme.colors.primary,
+            color = MaterialTheme.colorScheme.primary,
             strokeWidth = 6.dp
         )
     }
+}
+
+@Preview
+@Composable
+fun RoundedButtonPreview() {
+    RoundedButton(
+        text = "Button",
+        onClick = {}
+    )
 }

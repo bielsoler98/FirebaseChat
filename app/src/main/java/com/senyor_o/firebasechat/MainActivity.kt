@@ -8,6 +8,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.LaunchedEffect
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
@@ -24,6 +25,7 @@ import com.senyor_o.firebasechat.presentation.registration.RegistrationScreen
 import com.senyor_o.firebasechat.ui.theme.FirebaseChatTheme
 import dagger.hilt.android.AndroidEntryPoint
 
+@ExperimentalMaterial3Api
 @ExperimentalAnimationApi
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -51,31 +53,32 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@ExperimentalMaterial3Api
 @ExperimentalAnimationApi
 fun NavGraphBuilder.addLogin(
     navController: NavHostController
 ){
     composable(
         route = Destinations.Login.route,
-        enterTransition = { _, _ ->
+        enterTransition = {
             slideInHorizontally(
                 initialOffsetX = { 1000 },
                 animationSpec = tween(500)
             )
         },
-        exitTransition = { _, _ ->
+        exitTransition = {
             slideOutHorizontally(
                 targetOffsetX = { -1000 },
                 animationSpec = tween(500)
             )
         },
-        popEnterTransition = {_,_ ->
+        popEnterTransition = {
             slideInHorizontally(
                 initialOffsetX = { -1000 },
                 animationSpec = tween(500)
             )
         },
-        popExitTransition = { _, _ ->
+        popExitTransition = {
             slideOutHorizontally(
                 targetOffsetX = { 1000 },
                 animationSpec = tween(500)
@@ -109,31 +112,32 @@ fun NavGraphBuilder.addLogin(
     }
 }
 
+@ExperimentalMaterial3Api
 @ExperimentalAnimationApi
 fun NavGraphBuilder.addRegister(
     navController: NavHostController
 ){
     composable(
         route = Destinations.Register.route,
-        enterTransition = { _, _ ->
+        enterTransition = {
             slideInHorizontally(
                 initialOffsetX = { 1000 },
                 animationSpec = tween(500)
             )
         },
-        exitTransition = { _, _ ->
+        exitTransition = {
             slideOutHorizontally(
                 targetOffsetX = { -1000 },
                 animationSpec = tween(500)
             )
         },
-        popEnterTransition = {_,_ ->
+        popEnterTransition = {
             slideInHorizontally(
                 initialOffsetX = { -1000 },
                 animationSpec = tween(500)
             )
         },
-        popExitTransition = { _, _ ->
+        popExitTransition = {
             slideOutHorizontally(
                 targetOffsetX = { 1000 },
                 animationSpec = tween(500)
