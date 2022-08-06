@@ -2,13 +2,21 @@ package com.senyor_o.firebasechat.presentation.login
 
 import android.content.Context
 import android.util.Patterns
+import androidx.activity.compose.ManagedActivityResultLauncher
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.IntentSenderRequest
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.android.gms.auth.api.identity.BeginSignInRequest
+import com.google.android.gms.auth.api.identity.BeginSignInResult
+import com.google.android.gms.auth.api.identity.SignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
 import com.senyor_o.firebasechat.R
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class LoginViewModel: ViewModel() {
@@ -45,6 +53,84 @@ class LoginViewModel: ViewModel() {
         }
     }
 
+    fun oneTapGoogleSignIn(
+        launcher: ManagedActivityResultLauncher<IntentSenderRequest, ActivityResult>,
+        oneTapClient: SignInClient,
+        context: Context
+    ) {
+        val signInRequest = BeginSignInRequest.builder()
+                .setGoogleIdTokenRequestOptions(
+                    BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
+                        .setSupported(true)
+                        // Your server's client ID, not your Android client ID.
+                        .setServerClientId(context.getString(R.string.default_web_client_id))
+                        // Only show accounts previously used to sign in.
+                        .setFilterByAuthorizedAccounts(true)
+                        .build()
+                ).build()
+
+        viewModelScope.launch {
+            oneTapClient.beginSignIn(signInRequest)
+                .addOnSuccessListener {
+                    performAuthentication(
+                        launcher,
+                        it
+                    )
+                }.addOnFailureListener {
+                    oneTapSignUp(
+                        launcher,
+                        oneTapClient,
+                        context
+                    )
+                }
+        }
+    }
+
+    private fun oneTapSignUp(
+        launcher: ManagedActivityResultLauncher<IntentSenderRequest, ActivityResult>,
+        oneTapClient: SignInClient,
+        context: Context
+    ) {
+
+        val signUpRequest = BeginSignInRequest.builder()
+            .setGoogleIdTokenRequestOptions(
+                BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
+                    .setSupported(true)
+                    // Your server's client ID, not your Android client ID.
+                    .setServerClientId(context.getString(R.string.default_web_client_id))
+                    // Only show accounts previously used to sign in.
+                    .setFilterByAuthorizedAccounts(false)
+                    .build()
+            ).build()
+
+        oneTapClient.beginSignIn(signUpRequest)
+            .addOnSuccessListener {
+                performAuthentication(
+                    launcher,
+                    it
+                )
+            }.addOnFailureListener {
+//                signInWithGoogle(context, account.displayName, account.email)
+                state.value = state.value.copy(errorMessage = R.string.error_invalid_credentials)
+            }
+    }
+
+//    private fun signInWithGoogle(displayName: String, email: String) {
+//        val googleConf = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+//            .requestIdToken(context.getString(R.string.default_web_client_id))
+//            .requestEmail()
+//            .build()
+//        val googleClient = GoogleSignIn.getClient(context, googleConf)
+//    }
+
+    private fun performAuthentication(
+        launcher: ManagedActivityResultLauncher<IntentSenderRequest, ActivityResult>,
+        it: BeginSignInResult
+    ) {
+        val intent = IntentSenderRequest.Builder(it.pendingIntent.intentSender).build()
+        launcher.launch(intent)
+    }
+
     private fun onLoginSuccess(email: String) {
         state.value = state.value.copy(email = email)
         state.value = state.value.copy(successLogin = true)
@@ -54,6 +140,20 @@ class LoginViewModel: ViewModel() {
         state.value = state.value.copy(
             errorMessage = null
         )
+    }
+
+    fun loginWithCredentials(googleIdToken: String?) {
+        val credential = GoogleAuthProvider.getCredential(googleIdToken, null)
+        FirebaseAuth.getInstance()
+            .signInWithCredential(credential)
+            .addOnCompleteListener {
+                if (it.isSuccessful) {
+                    onLoginSuccess(it.result.user?.email!!)
+
+                } else {
+                    state.value = state.value.copy(errorMessage = R.string.error_invalid_credentials)
+                }
+            }
     }
 
 }

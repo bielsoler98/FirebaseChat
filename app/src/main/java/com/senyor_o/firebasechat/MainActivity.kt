@@ -169,12 +169,10 @@ fun NavGraphBuilder.addLogin(
             }
         } else {
             LoginScreen(
-                state = viewModel.state.value,
-                onLogin = viewModel::login,
+                viewModel = viewModel,
                 onNavigateToRegister = {
                     navController.navigate(Destinations.Register.route)
-                },
-                onDismissDialog = viewModel::hideErrorDialog,
+                }
             )
         }
     }

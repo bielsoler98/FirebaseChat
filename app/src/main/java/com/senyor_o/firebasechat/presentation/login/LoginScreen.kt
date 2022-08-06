@@ -1,6 +1,9 @@
 package com.senyor_o.firebasechat.presentation.login
 
-import android.content.Context
+import android.app.Activity
+import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -34,6 +37,14 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.google.android.gms.auth.api.identity.BeginSignInRequest
+import com.google.android.gms.auth.api.identity.Identity
+import com.google.android.gms.auth.api.identity.SignInClient
+import com.google.android.gms.common.api.Api
+import com.google.android.gms.common.api.ApiException
+import com.google.android.gms.common.api.CommonStatusCodes
+import com.google.firebase.auth.GoogleAuthProvider
 import com.senyor_o.firebasechat.R
 import com.senyor_o.firebasechat.presentation.components.RoundedButton
 import com.senyor_o.firebasechat.presentation.components.TransparentTextField
@@ -42,20 +53,47 @@ import com.senyor_o.firebasechat.presentation.components.SocialMediaButton
 import com.senyor_o.firebasechat.ui.theme.FACEBOOKCOLOR
 import com.senyor_o.firebasechat.ui.theme.FirebaseChatTheme
 import com.senyor_o.firebasechat.ui.theme.GMAILCOLOR
-import com.senyor_o.firebasechat.utility.session
+import com.senyor_o.firebasechat.utility.AuthResultContract
 
 @ExperimentalMaterial3Api
 @Composable
 fun LoginScreen(
-    state: LoginState,
-    onLogin: (String, String) -> Unit,
+    viewModel: LoginViewModel,
     onNavigateToRegister: () -> Unit,
-    onDismissDialog: () -> Unit
 ) {
     val emailValue = rememberSaveable{ mutableStateOf("") }
     val passwordValue = rememberSaveable{ mutableStateOf("") }
     var passwordVisibility by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
+    val context = LocalContext.current
+
+    val oneTapClient: SignInClient = remember {
+        Identity.getSignInClient(context)
+    }
+
+    val oneTaplauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result->
+        if (result.resultCode == Activity.RESULT_OK) {
+            try {
+                val credentials = oneTapClient.getSignInCredentialFromIntent(result.data)
+                val googleIdToken = credentials.googleIdToken
+                viewModel.loginWithCredentials(googleIdToken)
+            } catch (apiException: ApiException) {
+                when(apiException.statusCode) {
+                    CommonStatusCodes.CANCELED -> {
+                        Log.d("Auth", "One-tap dialog canceled")
+                    }
+                    CommonStatusCodes.NETWORK_ERROR -> {
+                        viewModel.state.value = viewModel.state.value.copy(errorMessage = R.string.error_invalid_credentials)
+                    }
+                    else -> {
+                        viewModel.state.value = viewModel.state.value.copy(errorMessage = R.string.error_occurred)
+                    }
+                }
+            }
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -136,7 +174,7 @@ fun LoginScreen(
                                     onDone = {
                                         focusManager.clearFocus()
 
-                                        onLogin(emailValue.value, passwordValue.value)
+                                        viewModel.login(emailValue.value, passwordValue.value)
                                     }
                                 ),
                                 imeAction = ImeAction.Done,
@@ -178,9 +216,9 @@ fun LoginScreen(
                         ) {
                             RoundedButton(
                                 text = "Login",
-                                displayProgressBar = state.displayProgressBar,
+                                displayProgressBar = viewModel.state.value.displayProgressBar,
                                 onClick = {
-                                    onLogin(emailValue.value, passwordValue.value)
+                                    viewModel.login(emailValue.value, passwordValue.value)
                                 }
                             )
                         }
@@ -231,13 +269,17 @@ fun LoginScreen(
                         ){
                             SocialMediaButton(
                                 text = "Login with Facebook",
-                                onClick = {  },
+                                onClick = {
+                                          //TODO
+                                },
                                 socialMediaColor = FACEBOOKCOLOR
                             )
 
                             SocialMediaButton(
                                 text = "Login with Gmail",
-                                onClick = { },
+                                onClick = {
+                                    viewModel.oneTapGoogleSignIn(oneTaplauncher, oneTapClient, context)
+                                },
                                 socialMediaColor = GMAILCOLOR
                             )
 
@@ -283,10 +325,10 @@ fun LoginScreen(
             }
         }
 
-        if(state.errorMessage != null){
+        if(viewModel.state.value.errorMessage != null){
             EventDialog(
-                errorMessage = state.errorMessage,
-                onDismiss = onDismissDialog
+                errorMessage = viewModel.state.value.errorMessage!!,
+                onDismiss = viewModel::hideErrorDialog
             )
         }
     }
@@ -297,11 +339,10 @@ fun LoginScreen(
 @Composable
 fun LoginScreenPreview() {
     FirebaseChatTheme {
+        val viewModel: LoginViewModel = hiltViewModel()
         LoginScreen(
-            state = LoginState(),
-            onLogin = { _ , _  -> },
-            onNavigateToRegister = { },
-            onDismissDialog = {  }
+            viewModel = viewModel,
+            onNavigateToRegister = { }
         )
     }
 }
