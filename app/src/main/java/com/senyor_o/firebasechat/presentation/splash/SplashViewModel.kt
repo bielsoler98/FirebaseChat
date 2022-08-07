@@ -7,6 +7,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.senyor_o.firebasechat.R
 import com.senyor_o.firebasechat.presentation.login.LoginState
+import com.senyor_o.firebasechat.utils.EMAIL_METHOD
+import com.senyor_o.firebasechat.utils.GOOGLE_METHOD
+import com.senyor_o.firebasechat.utils.logInWithMailAndPassword
+import com.senyor_o.firebasechat.utils.loginWithGoogle
 import kotlinx.coroutines.launch
 
 class SplashViewModel: ViewModel() {
@@ -17,10 +21,37 @@ class SplashViewModel: ViewModel() {
         val prefs =
             context.getSharedPreferences(context.getString(R.string.prefs_file), Context.MODE_PRIVATE)
         viewModelScope.launch {
-            val email = prefs?.getString("email", null)
+            val provider = prefs?.getString("provider", null)
 
-            email?.let {
-                state.value = state.value.copy(email = it, successSession = true)
+            provider?.let {
+                if(provider == EMAIL_METHOD) {
+                    val email = prefs.getString("email", null)
+                    val password = prefs.getString("email", null)
+                    if (!email.isNullOrEmpty() && !password.isNullOrEmpty())
+                    logInWithMailAndPassword(
+                        email,
+                        password,
+                        context,
+                        onLoginSuccess = {
+                            state.value = state.value.copy(successSession = true,sessionRetrieved = true)
+                        },
+                        onLoginFailure = {
+                            state.value = state.value.copy(sessionRetrieved = true)
+                        }
+                    )
+                } else if (provider == GOOGLE_METHOD) {
+                    val tokenId = prefs.getString("token", null)
+                    loginWithGoogle(
+                        tokenId,
+                        context,
+                        onLoginSuccess = {
+                            state.value = state.value.copy(successSession = true,sessionRetrieved = true)
+                        },
+                        onLoginFailure = {
+                            state.value = state.value.copy(sessionRetrieved = true)
+                        }
+                    )
+                }
             }
             state.value = state.value.copy(sessionRetrieved = true)
         }

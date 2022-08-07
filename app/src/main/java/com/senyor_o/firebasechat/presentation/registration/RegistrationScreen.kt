@@ -27,6 +27,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.senyor_o.firebasechat.presentation.components.RoundedButton
 import com.senyor_o.firebasechat.presentation.components.TransparentTextField
 import com.senyor_o.firebasechat.presentation.components.EventDialog
@@ -35,10 +36,8 @@ import com.senyor_o.firebasechat.ui.theme.FirebaseChatTheme
 @ExperimentalMaterial3Api
 @Composable
 fun RegistrationScreen(
-    state: RegisterState,
-    onRegister: (String, String, String, String) -> Unit,
-    onBack: () -> Unit,
-    onDismissDialog: () -> Unit
+    viewModel: RegisterViewModel = hiltViewModel(),
+    onBack: () -> Unit
 ) {
 
     val nameValue = remember { mutableStateOf("") }
@@ -143,7 +142,7 @@ fun RegistrationScreen(
                         onDone = {
                             focusManager.clearFocus()
 
-                            onRegister(
+                            viewModel.register(
                                 nameValue.value,
                                 emailValue.value,
                                 passwordValue.value,
@@ -171,9 +170,9 @@ fun RegistrationScreen(
 
                 RoundedButton(
                     text = "Sign Up",
-                    displayProgressBar = state.displayProgressBar,
+                    displayProgressBar = viewModel.state.value.displayProgressBar,
                     onClick = {
-                        onRegister(
+                        viewModel.register(
                             nameValue.value,
                             emailValue.value,
                             passwordValue.value,
@@ -202,8 +201,12 @@ fun RegistrationScreen(
             }
         }
 
-        if(state.errorMessage != null) {
-            EventDialog(errorMessage = state.errorMessage, onDismiss = onDismissDialog)
+        if(viewModel.state.value.errorMessage != null) {
+            EventDialog(errorMessage = viewModel.state.value.errorMessage!!,
+                onDismiss = {
+                    viewModel.hideErrorDialog()
+                }
+            )
         }
     }
 }
@@ -214,10 +217,8 @@ fun RegistrationScreen(
 fun RegistrationScreenPreview() {
     FirebaseChatTheme {
         RegistrationScreen(
-            state = RegisterState(),
-            onRegister = { _ , _, _, _  -> },
-            onBack = {},
-            onDismissDialog = {  }
+            viewModel = hiltViewModel(),
+            onBack = {}
         )
     }
 }

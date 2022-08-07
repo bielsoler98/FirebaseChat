@@ -12,15 +12,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.senyor_o.firebasechat.R
 
 @Composable
 fun SplashScreen(
-    onEnter: (Context) -> Unit
+    viewModel: SplashViewModel
 ) {
     val context = LocalContext.current
     LaunchedEffect(key1 = true) {
-        onEnter(context)
+        viewModel.validateSession(context)
     }
 
     Splash()

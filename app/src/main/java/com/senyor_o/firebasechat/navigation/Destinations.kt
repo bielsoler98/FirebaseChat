@@ -11,10 +11,5 @@ sealed class Destinations(
     object Splash: Destinations("splash", emptyList())
     object Login: Destinations("login", emptyList())
     object Register: Destinations("register", emptyList())
-    object Home: Destinations(
-        "home",
-        listOf(
-            navArgument("email"){ type = NavType.StringType }
-        )
-    )
+    object Home: Destinations("home", emptyList())
 }

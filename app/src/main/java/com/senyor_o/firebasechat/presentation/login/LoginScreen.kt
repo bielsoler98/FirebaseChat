@@ -72,7 +72,7 @@ fun LoginScreen(
             try {
                 val credentials = oneTapClient.getSignInCredentialFromIntent(result.data)
                 val googleIdToken = credentials.googleIdToken
-                viewModel.loginWithCredentials(googleIdToken)
+                viewModel.loginWithCredentials(googleIdToken, context)
             } catch (apiException: ApiException) {
                 when(apiException.statusCode) {
                     CommonStatusCodes.CANCELED -> {
@@ -168,7 +168,7 @@ fun LoginScreen(
                                     onDone = {
                                         focusManager.clearFocus()
 
-                                        viewModel.login(emailValue.value, passwordValue.value)
+                                        viewModel.login(emailValue.value, passwordValue.value, context = context)
                                     }
                                 ),
                                 imeAction = ImeAction.Done,
@@ -212,7 +212,7 @@ fun LoginScreen(
                                 text = "Login",
                                 displayProgressBar = viewModel.state.value.displayProgressBar,
                                 onClick = {
-                                    viewModel.login(emailValue.value, passwordValue.value)
+                                    viewModel.login(emailValue.value, passwordValue.value, context)
                                 }
                             )
                         }
@@ -315,9 +315,8 @@ fun LoginScreen(
 @Composable
 fun LoginScreenPreview() {
     FirebaseChatTheme {
-        val viewModel: LoginViewModel = hiltViewModel()
         LoginScreen(
-            viewModel = viewModel,
+            viewModel = hiltViewModel(),
             onNavigateToRegister = { }
         )
     }

@@ -15,13 +15,16 @@ import com.google.android.gms.auth.api.identity.SignInClient
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.senyor_o.firebasechat.R
+import com.senyor_o.firebasechat.utils.EMAIL_METHOD
+import com.senyor_o.firebasechat.utils.logInWithMailAndPassword
+import com.senyor_o.firebasechat.utils.loginWithGoogle
 import kotlinx.coroutines.launch
 
 class LoginViewModel: ViewModel() {
 
     val state: MutableState<LoginState> = mutableStateOf(LoginState())
 
-    fun login(email: String, password: String) {
+    fun login(email: String, password: String, context: Context) {
         val errorMessage = if(email.isBlank() || password.isBlank()) {
             R.string.error_input_empty
         } else if(!Patterns.EMAIL_ADDRESS.matcher(email).matches()){
@@ -36,18 +39,17 @@ class LoginViewModel: ViewModel() {
         viewModelScope.launch {
             state.value = state.value.copy(displayProgressBar = true)
 
-            FirebaseAuth
-                .getInstance()
-                .signInWithEmailAndPassword(email, password).addOnCompleteListener {
-                    if (it.isSuccessful) {
-                        onLoginSuccess(it.result.user?.email!!)
-
-                    } else {
-                        state.value = state.value.copy(errorMessage = R.string.error_invalid_credentials)
-                    }
+            logInWithMailAndPassword(
+                email = email,
+                password = password,
+                context = context,
+                onLoginSuccess = {
+                    state.value = state.value.copy(email = it, successLogin = true, displayProgressBar = false)
+                },
+                onLoginFailure = {
+                    state.value = state.value.copy(errorMessage = R.string.error_invalid_credentials, displayProgressBar = false)
                 }
-
-            state.value = state.value.copy(displayProgressBar = false)
+            )
         }
     }
 
@@ -109,8 +111,7 @@ class LoginViewModel: ViewModel() {
                     it
                 )
             }.addOnFailureListener {
-                state.value = state.value.copy(errorMessage = R.string.error_google)
-                state.value = state.value.copy(displayGoogleProgressBar = false)
+                state.value = state.value.copy(errorMessage = R.string.error_google, displayGoogleProgressBar = false)
             }
     }
 
@@ -122,30 +123,24 @@ class LoginViewModel: ViewModel() {
         launcher.launch(intent)
     }
 
-    private fun onLoginSuccess(email: String) {
-        state.value = state.value.copy(email = email)
-        state.value = state.value.copy(successLogin = true)
-    }
-
     fun hideErrorDialog() {
         state.value = state.value.copy(
             errorMessage = null
         )
     }
 
-    fun loginWithCredentials(googleIdToken: String?) {
-        val credential = GoogleAuthProvider.getCredential(googleIdToken, null)
-        FirebaseAuth.getInstance()
-            .signInWithCredential(credential)
-            .addOnCompleteListener {
-                if (it.isSuccessful) {
-                    onLoginSuccess(it.result.user?.email!!)
-                    state.value = state.value.copy(displayGoogleProgressBar = false)
-                } else {
-                    state.value = state.value.copy(errorMessage = R.string.error_google)
-                    state.value = state.value.copy(displayGoogleProgressBar = false)
-                }
+    fun loginWithCredentials(googleIdToken: String?, context: Context) {
+
+        loginWithGoogle(
+            googleIdToken = googleIdToken,
+            context = context,
+            onLoginSuccess = {
+                state.value = state.value.copy(email = it, displayGoogleProgressBar = false, successLogin = true)
+            },
+            onLoginFailure = {
+                state.value = state.value.copy(errorMessage = R.string.error_google, displayGoogleProgressBar = false)
             }
+        )
     }
 
 }

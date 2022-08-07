@@ -17,6 +17,7 @@ import androidx.navigation.NavHostController
 import com.google.accompanist.navigation.animation.AnimatedNavHost
 import com.google.accompanist.navigation.animation.composable
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
+import com.google.firebase.FirebaseApp
 import com.senyor_o.firebasechat.navigation.Destinations
 import com.senyor_o.firebasechat.presentation.home.HomeScreen
 import com.senyor_o.firebasechat.presentation.home.HomeViewModel
@@ -36,6 +37,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        FirebaseApp.initializeApp(this)
         setContent {
             FirebaseChatTheme {
                 val navController = rememberAnimatedNavController()
@@ -92,13 +94,12 @@ fun NavGraphBuilder.addSplash(
         }
     ){
         val viewModel: SplashViewModel = hiltViewModel()
-        val email = viewModel.state.value.email
 
         if (viewModel.state.value.sessionRetrieved) {
             if(viewModel.state.value.successSession){
                 LaunchedEffect(key1 = Unit){
                     navController.navigate(
-                        Destinations.Home.route + "/$email"
+                        Destinations.Home.route
                     ){
                         popUpTo(Destinations.Splash.route){
                             inclusive = true
@@ -117,7 +118,7 @@ fun NavGraphBuilder.addSplash(
                 }
             }
         } else {
-            SplashScreen(onEnter = viewModel::validateSession)
+            SplashScreen(viewModel = viewModel)
         }
     }
 }
@@ -155,12 +156,11 @@ fun NavGraphBuilder.addLogin(
         }
     ){
         val viewModel: LoginViewModel = hiltViewModel()
-        val email = viewModel.state.value.email
 
         if(viewModel.state.value.successLogin){
             LaunchedEffect(key1 = Unit){
                 navController.navigate(
-                    Destinations.Home.route + "/$email"
+                    Destinations.Home.route
                 ){
                     popUpTo(Destinations.Login.route){
                         inclusive = true
@@ -211,11 +211,10 @@ fun NavGraphBuilder.addRegister(
         }
     ){
         val viewModel: RegisterViewModel = hiltViewModel()
-        val email = viewModel.state.value.email
         if(viewModel.state.value.successRegister){
             LaunchedEffect(key1 = Unit){
                 navController.navigate(
-                    Destinations.Home.route + "/$email"
+                    Destinations.Home.route
                 ){
                     popUpTo(Destinations.Login.route){
                         inclusive = true
@@ -224,12 +223,10 @@ fun NavGraphBuilder.addRegister(
             }
         } else {
             RegistrationScreen(
-                state = viewModel.state.value,
-                onRegister = viewModel::register,
+                viewModel = viewModel,
                 onBack = {
                     navController.popBackStack()
-                },
-                onDismissDialog = viewModel::hideErrorDialog
+                }
             )
         }
     }
@@ -240,7 +237,7 @@ fun NavGraphBuilder.addHome(
     navController: NavHostController
 ) {
     composable(
-        route = Destinations.Home.route  + "/{email}",
+        route = Destinations.Home.route,
         enterTransition = {
             slideInHorizontally(
                 initialOffsetX = { 1000 },
@@ -265,10 +262,8 @@ fun NavGraphBuilder.addHome(
                 animationSpec = tween(500)
             )
         }
-    ){ backStackEntry->
+    ){
         val viewModel: HomeViewModel = hiltViewModel()
-        val email = backStackEntry.arguments?.getString("email") ?: ""
-        viewModel.state.value = viewModel.state.value.copy(email = email)
         if(viewModel.state.value.successLogOut){
             LaunchedEffect(key1 = Unit){
                 navController.navigate(
@@ -281,9 +276,7 @@ fun NavGraphBuilder.addHome(
             }
         } else {
             HomeScreen(
-                state = viewModel.state.value,
-                onLogOut = viewModel::logOut,
-                onEnter = viewModel::saveCredentials
+                viewModel = viewModel
             )
         }
     }
