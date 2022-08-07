@@ -12,8 +12,6 @@ import androidx.lifecycle.viewModelScope
 import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.BeginSignInResult
 import com.google.android.gms.auth.api.identity.SignInClient
-import com.google.android.gms.auth.api.signin.GoogleSignIn
-import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.senyor_o.firebasechat.R
@@ -70,6 +68,7 @@ class LoginViewModel: ViewModel() {
                 ).build()
 
         viewModelScope.launch {
+            state.value = state.value.copy(displayGoogleProgressBar = true)
             oneTapClient.beginSignIn(signInRequest)
                 .addOnSuccessListener {
                     performAuthentication(
@@ -110,18 +109,10 @@ class LoginViewModel: ViewModel() {
                     it
                 )
             }.addOnFailureListener {
-//                signInWithGoogle(context, account.displayName, account.email)
-                state.value = state.value.copy(errorMessage = R.string.error_invalid_credentials)
+                state.value = state.value.copy(errorMessage = R.string.error_google)
+                state.value = state.value.copy(displayGoogleProgressBar = false)
             }
     }
-
-//    private fun signInWithGoogle(displayName: String, email: String) {
-//        val googleConf = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-//            .requestIdToken(context.getString(R.string.default_web_client_id))
-//            .requestEmail()
-//            .build()
-//        val googleClient = GoogleSignIn.getClient(context, googleConf)
-//    }
 
     private fun performAuthentication(
         launcher: ManagedActivityResultLauncher<IntentSenderRequest, ActivityResult>,
@@ -149,9 +140,10 @@ class LoginViewModel: ViewModel() {
             .addOnCompleteListener {
                 if (it.isSuccessful) {
                     onLoginSuccess(it.result.user?.email!!)
-
+                    state.value = state.value.copy(displayGoogleProgressBar = false)
                 } else {
-                    state.value = state.value.copy(errorMessage = R.string.error_invalid_credentials)
+                    state.value = state.value.copy(errorMessage = R.string.error_google)
+                    state.value = state.value.copy(displayGoogleProgressBar = false)
                 }
             }
     }

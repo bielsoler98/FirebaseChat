@@ -11,7 +11,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
@@ -38,22 +37,17 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.auth.api.identity.SignInClient
-import com.google.android.gms.common.api.Api
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.CommonStatusCodes
-import com.google.firebase.auth.GoogleAuthProvider
 import com.senyor_o.firebasechat.R
 import com.senyor_o.firebasechat.presentation.components.RoundedButton
 import com.senyor_o.firebasechat.presentation.components.TransparentTextField
 import com.senyor_o.firebasechat.presentation.components.EventDialog
 import com.senyor_o.firebasechat.presentation.components.SocialMediaButton
-import com.senyor_o.firebasechat.ui.theme.FACEBOOKCOLOR
 import com.senyor_o.firebasechat.ui.theme.FirebaseChatTheme
 import com.senyor_o.firebasechat.ui.theme.GMAILCOLOR
-import com.senyor_o.firebasechat.utility.AuthResultContract
 
 @ExperimentalMaterial3Api
 @Composable
@@ -85,10 +79,10 @@ fun LoginScreen(
                         Log.d("Auth", "One-tap dialog canceled")
                     }
                     CommonStatusCodes.NETWORK_ERROR -> {
-                        viewModel.state.value = viewModel.state.value.copy(errorMessage = R.string.error_invalid_credentials)
+                        viewModel.state.value = viewModel.state.value.copy(errorMessage = R.string.network_occurred)
                     }
                     else -> {
-                        viewModel.state.value = viewModel.state.value.copy(errorMessage = R.string.error_occurred)
+                        viewModel.state.value = viewModel.state.value.copy(errorMessage = R.string.error_google)
                     }
                 }
             }
@@ -267,20 +261,22 @@ fun LoginScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ){
-                            SocialMediaButton(
-                                text = "Login with Facebook",
-                                onClick = {
-                                          //TODO
-                                },
-                                socialMediaColor = FACEBOOKCOLOR
-                            )
+//                            SocialMediaButton(
+//                                text = "Login with Facebook",
+//                                onClick = {
+//                                    facebookViewModel.login(context)
+//                                },
+//                                socialMediaColor = FACEBOOKCOLOR,
+//                                displayProgressBar = viewModel.state.value.displayFacebookProgressBar
+//                            )
 
                             SocialMediaButton(
                                 text = "Login with Gmail",
                                 onClick = {
                                     viewModel.oneTapGoogleSignIn(oneTaplauncher, oneTapClient, context)
                                 },
-                                socialMediaColor = GMAILCOLOR
+                                socialMediaColor = GMAILCOLOR,
+                                displayProgressBar = viewModel.state.value.displayGoogleProgressBar
                             )
 
                             ClickableText(
@@ -301,26 +297,6 @@ fun LoginScreen(
                             }
                         }
                     }
-                }
-
-                FloatingActionButton(
-                    modifier = Modifier
-                        .size(72.dp)
-                        .constrainAs(fab) {
-                            top.linkTo(surface.top, margin = (-36).dp)
-                            end.linkTo(surface.end, margin = 36.dp)
-                        },
-                    onClick = {
-                        onNavigateToRegister()
-                    },
-                    containerColor = MaterialTheme.colorScheme.primary
-                ) {
-                    Icon(
-                        modifier = Modifier.size(42.dp),
-                        imageVector = Icons.Default.ArrowForward,
-                        contentDescription = "Forward Icon",
-                        tint = Color.White
-                    )
                 }
             }
         }

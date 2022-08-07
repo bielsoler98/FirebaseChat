@@ -7,5 +7,6 @@ data class LoginState(
     val password: String = "",
     val successLogin: Boolean = false,
     val displayProgressBar: Boolean = false,
+    val displayGoogleProgressBar: Boolean = false,
     @StringRes val errorMessage: Int? = null
 )
