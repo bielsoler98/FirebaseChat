@@ -33,7 +33,7 @@ class SplashViewModel: ViewModel() {
                         password,
                         context,
                         onLoginSuccess = {
-                            state.value = state.value.copy(successSession = true,sessionRetrieved = true)
+                            state.value = state.value.copy(sessionRetrieved = true)
                         },
                         onLoginFailure = {
                             state.value = state.value.copy(sessionRetrieved = true)
@@ -41,16 +41,18 @@ class SplashViewModel: ViewModel() {
                     )
                 } else if (provider == GOOGLE_METHOD) {
                     val tokenId = prefs.getString("token", null)
-                    loginWithGoogle(
-                        tokenId,
-                        context,
-                        onLoginSuccess = {
-                            state.value = state.value.copy(successSession = true,sessionRetrieved = true)
-                        },
-                        onLoginFailure = {
-                            state.value = state.value.copy(sessionRetrieved = true)
-                        }
-                    )
+                    viewModelScope.launch {
+                        loginWithGoogle(
+                            tokenId,
+                            context,
+                            onLoginSuccess = {
+                                state.value = state.value.copy(sessionRetrieved = true)
+                            },
+                            onLoginFailure = {
+                                state.value = state.value.copy(sessionRetrieved = true)
+                            }
+                        )
+                    }
                 }
             }
             state.value = state.value.copy(sessionRetrieved = true)

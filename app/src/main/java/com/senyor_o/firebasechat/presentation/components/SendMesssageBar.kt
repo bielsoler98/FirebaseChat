@@ -19,7 +19,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 
 @ExperimentalMaterial3Api
 @Composable
-fun SendMesssageBar(
+fun SendMessageBar(
     modifier: Modifier = Modifier,
     textFieldValue: MutableState<String>,
     textLabel: String,
@@ -27,7 +27,7 @@ fun SendMesssageBar(
     keyboardType: KeyboardType,
     keyboardActions: KeyboardActions,
     imeAction: ImeAction,
-    trailingIcon: @Composable() (() -> Unit)? = null,
+    trailingIcon: @Composable (() -> Unit)? = null,
     visualTransformation: VisualTransformation = VisualTransformation.None
 ) {
     TextField(

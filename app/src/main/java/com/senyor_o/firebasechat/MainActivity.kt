@@ -96,24 +96,12 @@ fun NavGraphBuilder.addSplash(
         val viewModel: SplashViewModel = hiltViewModel()
 
         if (viewModel.state.value.sessionRetrieved) {
-            if(viewModel.state.value.successSession){
-                LaunchedEffect(key1 = Unit){
-                    navController.navigate(
-                        Destinations.Home.route
-                    ){
-                        popUpTo(Destinations.Splash.route){
-                            inclusive = true
-                        }
-                    }
-                }
-            } else {
-                LaunchedEffect(key1 = Unit){
-                    navController.navigate(
-                        Destinations.Login.route
-                    ){
-                        popUpTo(Destinations.Splash.route){
-                            inclusive = true
-                        }
+            LaunchedEffect(key1 = Unit){
+                navController.navigate(
+                    Destinations.Home.route
+                ){
+                    popUpTo(Destinations.Splash.route){
+                        inclusive = true
                     }
                 }
             }

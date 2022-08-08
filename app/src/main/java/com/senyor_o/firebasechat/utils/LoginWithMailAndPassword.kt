@@ -15,12 +15,12 @@ fun logInWithMailAndPassword(
         .getInstance()
         .signInWithEmailAndPassword(email, password).addOnCompleteListener {
             if (it.isSuccessful) {
-                onLoginSuccess(it.result.user?.email!!)
                 val prefs = context.getSharedPreferences(context.getString(R.string.prefs_file), Context.MODE_PRIVATE).edit()
                 prefs.putString("provider", EMAIL_METHOD)
                 prefs.putString("email", email)
                 prefs.putString("password", password)
                 prefs.apply()
+                onLoginSuccess(it.result.user?.email!!)
             } else {
                 onLoginFailure()
             }

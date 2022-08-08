@@ -1,6 +1,5 @@
 package com.senyor_o.firebasechat.presentation.registration
 
-import android.content.Context
 import android.util.Patterns
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -8,7 +7,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.senyor_o.firebasechat.R
-import kotlinx.coroutines.delay
+import com.senyor_o.firebasechat.utils.DISPLAY_NAME
+import com.senyor_o.firebasechat.utils.PROFILE_PICTURE
+import com.senyor_o.firebasechat.utils.addUserAdditionalData
 import kotlinx.coroutines.launch
 
 class RegisterViewModel: ViewModel() {
@@ -40,8 +41,14 @@ class RegisterViewModel: ViewModel() {
             FirebaseAuth.getInstance().
                 createUserWithEmailAndPassword(email, password).addOnCompleteListener {
                     if (it.isSuccessful) {
-                        state.value = state.value.copy(email = it.result.user?.email!!)
-                        state.value = state.value.copy(successRegister = true)
+                        state.value = state.value.copy(email = it.result.user?.email!!, successRegister = true)
+                        addUserAdditionalData(
+                            it.result.user!!,
+                            hashMapOf(
+                                DISPLAY_NAME to name,
+                                PROFILE_PICTURE to ""
+                            )
+                        )
                     } else {
                         state.value = state.value.copy(errorMessage = R.string.error_occurred)
                     }

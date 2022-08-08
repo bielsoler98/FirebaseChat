@@ -8,5 +8,6 @@ data class LoginState(
     val successLogin: Boolean = false,
     val displayProgressBar: Boolean = false,
     val displayGoogleProgressBar: Boolean = false,
+    val firstTimeLogInWithGoogle: Boolean = false,
     @StringRes val errorMessage: Int? = null
 )

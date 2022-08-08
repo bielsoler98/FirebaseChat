@@ -15,9 +15,7 @@ import com.google.android.gms.auth.api.identity.SignInClient
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import com.senyor_o.firebasechat.R
-import com.senyor_o.firebasechat.utils.EMAIL_METHOD
-import com.senyor_o.firebasechat.utils.logInWithMailAndPassword
-import com.senyor_o.firebasechat.utils.loginWithGoogle
+import com.senyor_o.firebasechat.utils.*
 import kotlinx.coroutines.launch
 
 class LoginViewModel: ViewModel() {
@@ -110,6 +108,7 @@ class LoginViewModel: ViewModel() {
                     launcher,
                     it
                 )
+                state.value = state.value.copy(firstTimeLogInWithGoogle = true)
             }.addOnFailureListener {
                 state.value = state.value.copy(errorMessage = R.string.error_google, displayGoogleProgressBar = false)
             }
@@ -130,17 +129,27 @@ class LoginViewModel: ViewModel() {
     }
 
     fun loginWithCredentials(googleIdToken: String?, context: Context) {
-
-        loginWithGoogle(
-            googleIdToken = googleIdToken,
-            context = context,
-            onLoginSuccess = {
-                state.value = state.value.copy(email = it, displayGoogleProgressBar = false, successLogin = true)
-            },
-            onLoginFailure = {
-                state.value = state.value.copy(errorMessage = R.string.error_google, displayGoogleProgressBar = false)
-            }
-        )
+        viewModelScope.launch {
+            loginWithGoogle(
+                googleIdToken = googleIdToken,
+                context = context,
+                onLoginSuccess = {
+                    state.value = state.value.copy(email = it.email!!, displayGoogleProgressBar = false, successLogin = true)
+                    if(state.value.firstTimeLogInWithGoogle) {
+                        addUserAdditionalData(
+                            it,
+                            hashMapOf(
+                                DISPLAY_NAME to it.displayName,
+                                PROFILE_PICTURE to it.photoUrl
+                            )
+                        )
+                    }
+                },
+                onLoginFailure = {
+                    state.value = state.value.copy(errorMessage = R.string.error_google, displayGoogleProgressBar = false)
+                }
+            )
+        }
     }
 
 }
