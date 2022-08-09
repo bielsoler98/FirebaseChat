@@ -1,5 +1,6 @@
 package com.senyor_o.firebasechat.presentation.registration
 
+import android.content.Context
 import android.util.Patterns
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -8,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
 import com.senyor_o.firebasechat.R
 import com.senyor_o.firebasechat.utils.DISPLAY_NAME
+import com.senyor_o.firebasechat.utils.EMAIL_METHOD
 import com.senyor_o.firebasechat.utils.PROFILE_PICTURE
 import com.senyor_o.firebasechat.utils.addUserAdditionalData
 import kotlinx.coroutines.launch
@@ -20,7 +22,8 @@ class RegisterViewModel: ViewModel() {
         name: String,
         email: String,
         password: String,
-        confirmPassword: String
+        confirmPassword: String,
+        context: Context
     ) {
         val errorMessage = if(name.isBlank() || email.isBlank() ||  password.isBlank() || confirmPassword.isBlank()){
             R.string.error_input_empty
@@ -39,9 +42,15 @@ class RegisterViewModel: ViewModel() {
             state.value = state.value.copy(displayProgressBar = true)
 
             FirebaseAuth.getInstance().
-                createUserWithEmailAndPassword(email, password).addOnCompleteListener {
+                createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener {
                     if (it.isSuccessful) {
                         state.value = state.value.copy(email = it.result.user?.email!!, successRegister = true)
+                        val prefs = context.getSharedPreferences(context.getString(R.string.prefs_file), Context.MODE_PRIVATE).edit()
+                        prefs.putString("provider", EMAIL_METHOD)
+                        prefs.putString("email", it.result.user?.email!!)
+                        prefs.putString("password", password)
+                        prefs.apply()
                         addUserAdditionalData(
                             it.result.user!!,
                             hashMapOf(

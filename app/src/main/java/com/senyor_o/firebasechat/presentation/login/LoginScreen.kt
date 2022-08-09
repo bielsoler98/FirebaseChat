@@ -106,7 +106,7 @@ fun LoginScreen(
         ){
             ConstraintLayout {
 
-                val (surface, fab) = createRefs()
+                val surface = createRef()
 
                 Surface(
                     modifier = Modifier

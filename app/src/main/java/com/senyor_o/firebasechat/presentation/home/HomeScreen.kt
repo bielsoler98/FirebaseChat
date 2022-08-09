@@ -1,20 +1,19 @@
 package com.senyor_o.firebasechat.presentation.home
 
 
-import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,11 +28,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.senyor_o.firebasechat.R
 import com.senyor_o.firebasechat.presentation.components.DrawerHeader
 import com.senyor_o.firebasechat.presentation.components.MenuItem
+import com.senyor_o.firebasechat.presentation.components.MessageItem
 import com.senyor_o.firebasechat.presentation.components.SendMessageBar
 import com.senyor_o.firebasechat.ui.theme.FirebaseChatTheme
-import com.senyor_o.firebasechat.utils.MESSAGE
-import com.senyor_o.firebasechat.utils.uploadPhoto
+import com.senyor_o.firebasechat.utils.*
 import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,6 +45,16 @@ fun HomeScreen(
     val messageValue = rememberSaveable{ mutableStateOf("") }
     val drawerState = rememberDrawerState(DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    val listState = rememberLazyListState()
+    LaunchedEffect(viewModel.state.value.messages.size){
+        listState.animateScrollToItem(
+            if (viewModel.state.value.messages.size > 0) {
+                viewModel.state.value.messages.size - 1
+            } else {
+                0
+            }
+        )
+    }
     val galleryLauncher =  rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let {
             viewModel.addProfilePicture(uri)
@@ -124,12 +134,15 @@ fun HomeScreen(
                     trailingIcon = {
                         IconButton(
                             onClick = {
-                                viewModel.addMessage(
-                                    messageValue.value,
-                                    onSuccess = {
-                                        messageValue.value = ""
-                                    }
-                                )
+                                if(!messageValue.value.isNullOrEmpty()) {
+                                    viewModel.addMessage(
+                                        TEXT_TYPE,
+                                        messageValue.value,
+                                        onSuccess = {
+                                            messageValue.value = ""
+                                        }
+                                    )
+                                }
                             }
                         ) {
                             Icon(
@@ -147,15 +160,18 @@ fun HomeScreen(
                         .background(Color.White)
                         .padding(innerPadding),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
+                    state = listState
                 ) {
-                    viewModel.state.value.messages.forEach { item ->
+                    viewModel.state.value.messages.forEach { message ->
                         item {
-                            Text(
-                                text = item[MESSAGE].toString(),
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp)
+                            MessageItem(
+                                text = message.content,
+                                isCurrentUser = message.isCurrentUser,
+                                time = String.format("%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(message.sentDate),
+                                    TimeUnit.MILLISECONDS.toMinutes(message.sentDate) - TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(message.sentDate)),
+                                    TimeUnit.MILLISECONDS.toSeconds(message.sentDate) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(message.sentDate))),
+                                imageUrl = message.user.observeAsState().value?.ppf,
+                                userName = message.user.observeAsState().value?.displayName
                             )
                         }
                     }

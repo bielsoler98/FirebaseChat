@@ -10,7 +10,6 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
@@ -98,7 +97,11 @@ fun NavGraphBuilder.addSplash(
         if (viewModel.state.value.sessionRetrieved) {
             LaunchedEffect(key1 = Unit){
                 navController.navigate(
-                    Destinations.Home.route
+                    if( viewModel.state.value.sessionSuccessful) {
+                        Destinations.Home.route
+                    } else {
+                        Destinations.Login.route
+                    }
                 ){
                     popUpTo(Destinations.Splash.route){
                         inclusive = true

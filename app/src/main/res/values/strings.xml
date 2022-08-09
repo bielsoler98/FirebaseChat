@@ -16,5 +16,6 @@
     <string name="facebook_app_id">807712314004796</string>
     <string name="fb_login_protocol_scheme">fb807712314004796</string>
     <string name="facebook_client_token">e3b193f519b093d397cb02a7b30c012e</string>
+    <string name="default_notification_channel_id">default_channel</string>
 
 </resources>

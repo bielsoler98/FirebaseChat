@@ -16,6 +16,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -49,7 +50,7 @@ fun RegistrationScreen(
     var confirmPasswordVisibility by remember { mutableStateOf(false) }
 
     val focusManager = LocalFocusManager.current
-
+    val context = LocalContext.current
     Box(
       modifier = Modifier.fillMaxWidth()
     ){
@@ -146,7 +147,8 @@ fun RegistrationScreen(
                                 nameValue.value,
                                 emailValue.value,
                                 passwordValue.value,
-                                confirmPasswordValue.value
+                                confirmPasswordValue.value,
+                                context
                             )
                         }
                     ),
@@ -176,7 +178,8 @@ fun RegistrationScreen(
                             nameValue.value,
                             emailValue.value,
                             passwordValue.value,
-                            confirmPasswordValue.value
+                            confirmPasswordValue.value,
+                            context
                         )
                     }
                 )

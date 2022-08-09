@@ -22,23 +22,22 @@ class SplashViewModel: ViewModel() {
             context.getSharedPreferences(context.getString(R.string.prefs_file), Context.MODE_PRIVATE)
         viewModelScope.launch {
             val provider = prefs?.getString("provider", null)
-
-            provider?.let {
+            if (provider != null ) {
                 if(provider == EMAIL_METHOD) {
                     val email = prefs.getString("email", null)
-                    val password = prefs.getString("email", null)
+                    val password = prefs.getString("password", null)
                     if (!email.isNullOrEmpty() && !password.isNullOrEmpty())
-                    logInWithMailAndPassword(
-                        email,
-                        password,
-                        context,
-                        onLoginSuccess = {
-                            state.value = state.value.copy(sessionRetrieved = true)
-                        },
-                        onLoginFailure = {
-                            state.value = state.value.copy(sessionRetrieved = true)
-                        }
-                    )
+                        logInWithMailAndPassword(
+                            email,
+                            password,
+                            context,
+                            onLoginSuccess = {
+                                state.value = state.value.copy(sessionRetrieved = true, sessionSuccessful = true)
+                            },
+                            onLoginFailure = {
+                                state.value = state.value.copy(sessionRetrieved = true)
+                            }
+                        )
                 } else if (provider == GOOGLE_METHOD) {
                     val tokenId = prefs.getString("token", null)
                     viewModelScope.launch {
@@ -46,7 +45,7 @@ class SplashViewModel: ViewModel() {
                             tokenId,
                             context,
                             onLoginSuccess = {
-                                state.value = state.value.copy(sessionRetrieved = true)
+                                state.value = state.value.copy(sessionRetrieved = true, sessionSuccessful = true)
                             },
                             onLoginFailure = {
                                 state.value = state.value.copy(sessionRetrieved = true)
@@ -54,8 +53,9 @@ class SplashViewModel: ViewModel() {
                         )
                     }
                 }
+            } else {
+                state.value = state.value.copy(sessionRetrieved = true)
             }
-            state.value = state.value.copy(sessionRetrieved = true)
         }
     }
 }

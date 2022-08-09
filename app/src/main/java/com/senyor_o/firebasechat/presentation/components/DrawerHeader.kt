@@ -23,6 +23,7 @@ import coil.compose.AsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.compose.rememberImagePainter
 import coil.request.ImageRequest
+import com.senyor_o.firebasechat.R
 
 @Composable
 fun DrawerHeader(
@@ -43,29 +44,11 @@ fun DrawerHeader(
                 onClick()
             }
         ) {
-            if( !imageUrl.isNullOrEmpty() ){
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(imageUrl)
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.size(128.dp)
-                        .clip(CircleShape)                       // clip to the circle shape
-                        .border(2.dp, Color.Gray, CircleShape)
-                )
-            } else {
-
-                Image(
-                    imageVector = Icons.Default.Face,
-                    contentDescription = "avatar",
-                    contentScale = ContentScale.Crop,            // crop the image if it's not a square
-                    modifier = Modifier.size(128.dp)
-                        .clip(CircleShape)                       // clip to the circle shape
-                        .border(2.dp, Color.Gray, CircleShape)   // add a border (optional)
-                )
-            }
+            AvatarImage(
+                imageUrl = imageUrl,
+                modifier = Modifier
+                    .size(128.dp)
+            )
         }
 
         Spacer(modifier = Modifier.height(8.dp))
