@@ -115,7 +115,7 @@ fun LoginScreen(
                         .constrainAs(surface) {
                             bottom.linkTo(parent.bottom)
                         },
-                    color = Color.White,
+                    color = MaterialTheme.colorScheme.background,
                     shape = RoundedCornerShape(
                         topStartPercent = 8,
                         topEndPercent = 8

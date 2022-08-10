@@ -12,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId "com.senyor_o.firebasechat"
-        minSdk 21
+        minSdk 26
         targetSdk 32
         compileSdk 32
         versionCode 1

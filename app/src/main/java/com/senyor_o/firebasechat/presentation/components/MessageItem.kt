@@ -23,13 +23,16 @@ import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.senyor_o.firebasechat.utils.IMAGE_TYPE
+import com.senyor_o.firebasechat.utils.TEXT_TYPE
 
 private val ForeignOwnMessage = RoundedCornerShape(0.dp, 8.dp, 8.dp, 8.dp)
 private val AuthorOwnMessage = RoundedCornerShape(8.dp, 0.dp, 8.dp, 8.dp)
 
 @Composable
 fun MessageItem(
-    text: String,
+    type: String,
+    content: String?,
     isCurrentUser: Boolean,
     userName: String?,
     imageUrl: String?,
@@ -87,17 +90,34 @@ fun MessageItem(
                 }
                 ConstraintLayout {
                     val (contentRef, timeRef) = createRefs()
-                    Text(
-                        modifier = Modifier
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                            .constrainAs(contentRef) {
-                                top.linkTo(parent.top)
-                                start.linkTo(parent.start)
-                            },
-                        text = text,
-                        style = MaterialTheme.typography.titleLarge
-                    )
-
+                    if (type == TEXT_TYPE && !content.isNullOrEmpty()) {
+                        Text(
+                            modifier = Modifier
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                                .constrainAs(contentRef) {
+                                    top.linkTo(parent.top)
+                                    start.linkTo(parent.start)
+                                },
+                            text = content,
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                    } else if(type == IMAGE_TYPE && !content.isNullOrEmpty()) {
+                        AsyncImage(
+                            modifier = Modifier
+                                .size(450.dp)
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                                .constrainAs(contentRef) {
+                                    top.linkTo(parent.top)
+                                    start.linkTo(parent.start)
+                                },
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(content)
+                                .crossfade(true)
+                                .build(),
+                            contentDescription = null,
+                            contentScale = ContentScale.Fit
+                        )
+                    }
                     Text(
                         modifier = Modifier
                             .constrainAs(timeRef) {
@@ -119,6 +139,7 @@ fun MessageItem(
 @Composable
 fun MessageItemPreview() {
     MessageItem(
+        TEXT_TYPE,
         "Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!",
         false,
         "Perry",

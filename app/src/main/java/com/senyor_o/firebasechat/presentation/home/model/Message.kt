@@ -4,8 +4,8 @@ import androidx.lifecycle.MutableLiveData
 
 data class Message(
     val contentType: String,
-    val content: String,
+    val content: MutableLiveData<String>,
     val user: MutableLiveData<User>,
-    val sentDate: Long,
+    val sentDate: String,
     val isCurrentUser: Boolean,
 )

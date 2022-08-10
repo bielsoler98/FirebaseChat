@@ -1,6 +1,7 @@
 package com.senyor_o.firebasechat.presentation.home
 
 
+import android.icu.text.SimpleDateFormat
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -25,6 +26,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.google.firebase.auth.FirebaseAuth
 import com.senyor_o.firebasechat.R
 import com.senyor_o.firebasechat.presentation.components.DrawerHeader
 import com.senyor_o.firebasechat.presentation.components.MenuItem
@@ -33,6 +35,7 @@ import com.senyor_o.firebasechat.presentation.components.SendMessageBar
 import com.senyor_o.firebasechat.ui.theme.FirebaseChatTheme
 import com.senyor_o.firebasechat.utils.*
 import kotlinx.coroutines.launch
+import java.util.*
 import java.util.concurrent.TimeUnit
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,9 +58,28 @@ fun HomeScreen(
             }
         )
     }
-    val galleryLauncher =  rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+    val addProfilePictureLauncher =  rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let {
-            viewModel.addProfilePicture(uri)
+            viewModel.uploadPhoto(
+                uri,
+                name = FirebaseAuth.getInstance().currentUser?.uid!!,
+                callback = viewModel::addProfilePicture
+            )
+        }
+    }
+    val sendPhotoLauncher =  rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        uri?.let {
+            viewModel.uploadPhoto(
+                uri,
+                name ="${FirebaseAuth.getInstance().currentUser?.uid!!}-${System.currentTimeMillis()}",
+                callback = {
+                    viewModel.addMessage(
+                        IMAGE_TYPE,
+                        it,
+                        onSuccess = {}
+                    )
+                }
+            )
         }
     }
     val items = listOf(
@@ -78,7 +100,7 @@ fun HomeScreen(
                 viewModel.state.value.name,
                 viewModel.state.value.profileImage
             ) {
-                galleryLauncher.launch("image/*")
+                addProfilePictureLauncher.launch("image/*")
             }
             items.forEach { item ->
                 NavigationDrawerItem(
@@ -95,7 +117,7 @@ fun HomeScreen(
         }
     ) {
         Scaffold(
-            modifier = Modifier.background(Color.White),
+            modifier = Modifier.background(MaterialTheme.colorScheme.background),
             topBar = {
                 CenterAlignedTopAppBar(
                     title = { Text(stringResource(id = R.string.app_name)) },
@@ -119,7 +141,7 @@ fun HomeScreen(
                     }
                 )
             },
-            containerColor = Color.White,
+            containerColor = MaterialTheme.colorScheme.background,
             bottomBar = {
                 SendMessageBar(
                     modifier = Modifier.padding(8.dp),
@@ -132,24 +154,42 @@ fun HomeScreen(
                         }
                     ),
                     trailingIcon = {
-                        IconButton(
-                            onClick = {
-                                if(!messageValue.value.isNullOrEmpty()) {
-                                    viewModel.addMessage(
-                                        TEXT_TYPE,
-                                        messageValue.value,
-                                        onSuccess = {
-                                            messageValue.value = ""
-                                        }
-                                    )
+                        Row {
+                            IconButton(
+                                onClick = {
+                                    sendPhotoLauncher.launch("image/*")
                                 }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AttachFile,
+                                    contentDescription = "Send Message"
+                                )
                             }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Send,
-                                contentDescription = "Send Message"
+                            Spacer(modifier = Modifier
+                                .width(
+                                    8.dp
+                                )
                             )
+                            IconButton(
+                                onClick = {
+                                    if(!messageValue.value.isNullOrEmpty()) {
+                                        viewModel.addMessage(
+                                            TEXT_TYPE,
+                                            messageValue.value,
+                                            onSuccess = {
+                                                messageValue.value = ""
+                                            }
+                                        )
+                                    }
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Send,
+                                    contentDescription = "Send Message"
+                                )
+                            }
                         }
+
                     },
                     imeAction = ImeAction.Done
                 )
@@ -157,7 +197,7 @@ fun HomeScreen(
             content = { innerPadding ->
                 LazyColumn(
                     modifier = Modifier
-                        .background(Color.White)
+                        .background(MaterialTheme.colorScheme.background)
                         .padding(innerPadding),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     state = listState
@@ -165,11 +205,10 @@ fun HomeScreen(
                     viewModel.state.value.messages.forEach { message ->
                         item {
                             MessageItem(
-                                text = message.content,
+                                type = message.contentType,
+                                content = message.content.observeAsState().value,
                                 isCurrentUser = message.isCurrentUser,
-                                time = String.format("%02d:%02d:%02d", TimeUnit.MILLISECONDS.toHours(message.sentDate),
-                                    TimeUnit.MILLISECONDS.toMinutes(message.sentDate) - TimeUnit.HOURS.toMinutes(TimeUnit.MILLISECONDS.toHours(message.sentDate)),
-                                    TimeUnit.MILLISECONDS.toSeconds(message.sentDate) - TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(message.sentDate))),
+                                time = message.sentDate,
                                 imageUrl = message.user.observeAsState().value?.ppf,
                                 userName = message.user.observeAsState().value?.displayName
                             )

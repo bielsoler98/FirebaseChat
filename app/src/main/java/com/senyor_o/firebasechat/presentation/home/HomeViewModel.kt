@@ -2,7 +2,10 @@ package com.senyor_o.firebasechat.presentation.home
 
 
 import android.content.Context
+import android.icu.text.SimpleDateFormat
 import android.net.Uri
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.MutableLiveData
@@ -18,6 +21,11 @@ import com.senyor_o.firebasechat.presentation.home.model.User
 import com.senyor_o.firebasechat.utils.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.*
 
 class HomeViewModel: ViewModel() {
 
@@ -74,10 +82,12 @@ class HomeViewModel: ViewModel() {
                             data[IS_CURRENT_USER] = Firebase.auth.currentUser?.uid.toString() == data[SENT_BY].toString()
                             list.add(Message(
                                 contentType = data[CONTENT_TYPE].toString(),
-                                content = data[CONTENT].toString(),
+                                content = MutableLiveData<String>().apply{
+                                    postValue(data[CONTENT].toString())
+                                },
                                 user = getUser(data[SENT_BY].toString()),
                                 isCurrentUser = Firebase.auth.currentUser?.uid.toString() == data[SENT_BY].toString(),
-                                sentDate = data[SENT_ON].toString().toLong()
+                                sentDate = getFormattedDate(data[SENT_ON].toString().toLong())
                             ))
                         }
                     }
@@ -85,6 +95,18 @@ class HomeViewModel: ViewModel() {
                     state.value = state.value.copy(messages = list)
                 }
         }
+    }
+
+    private fun getFormattedDate(timeInMillis: Long) : String {
+        // define once somewhere in order to reuse it
+        val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+
+// JVM representation of a millisecond epoch absolute instant
+        val instant = Instant.ofEpochMilli(timeInMillis)
+
+// Adding the timezone information to be able to format it (change accordingly)
+        val date = LocalDateTime.ofInstant(instant, ZoneId.systemDefault())
+        return formatter.format(date) // 10/12/2019 06:35:45
     }
 
     private fun getUser(userUid: String): MutableLiveData<User> {
@@ -133,21 +155,29 @@ class HomeViewModel: ViewModel() {
         }
     }
 
-    fun addProfilePicture(imageUri: Uri) {
+    fun addProfilePicture(imageUrl: String) {
+        viewModelScope.launch {
+            updateUserAdditionalData(
+                FirebaseAuth.getInstance().currentUser!!,
+                hashMapOf(
+                    PROFILE_PICTURE to imageUrl
+                )
+            )
+        }
+    }
+
+    fun uploadPhoto(
+        imageUri: Uri,
+        callback: (String) -> Unit,
+        name: String
+    ) {
         viewModelScope.launch {
             uploadPhoto(
                 imageUri,
-                FirebaseAuth.getInstance().currentUser?.uid!!,
+                name,
                 "image/png",
                 callback = {
-                    viewModelScope.launch {
-                        updateUserAdditionalData(
-                            FirebaseAuth.getInstance().currentUser!!,
-                            hashMapOf(
-                                PROFILE_PICTURE to it
-                            )
-                        )
-                    }
+                    callback(it)
                 }
             )
         }
