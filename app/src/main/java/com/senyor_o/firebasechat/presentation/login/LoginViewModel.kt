@@ -1,155 +1,193 @@
 package com.senyor_o.firebasechat.presentation.login
 
-import android.content.Context
-import android.util.Patterns
-import androidx.activity.compose.ManagedActivityResultLauncher
-import androidx.activity.result.ActivityResult
-import androidx.activity.result.IntentSenderRequest
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.liveData
 import androidx.lifecycle.viewModelScope
-import com.google.android.gms.auth.api.identity.BeginSignInRequest
 import com.google.android.gms.auth.api.identity.BeginSignInResult
 import com.google.android.gms.auth.api.identity.SignInClient
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.GoogleAuthProvider
-import com.senyor_o.firebasechat.R
-import com.senyor_o.firebasechat.utils.*
+import com.google.firebase.auth.AuthCredential
+import com.senyor_o.firebasechat.domain.repository.AuthRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import javax.inject.Inject
+import com.senyor_o.firebasechat.R
+import com.senyor_o.firebasechat.domain.model.Response
+import com.senyor_o.firebasechat.domain.model.Response.*
+import com.senyor_o.firebasechat.utils.Constants
+import com.senyor_o.firebasechat.utils.Constants.SIGN_IN_ERROR_MESSAGE
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 
-class LoginViewModel: ViewModel() {
+@HiltViewModel
+class LoginViewModel @Inject constructor(
+    private val repo: AuthRepository,
+    val oneTapClient: SignInClient
+): ViewModel() {
 
-    val state: MutableState<LoginState> = mutableStateOf(LoginState())
+    val isUserAuthenticated get() = repo.isUserAuthenticatedInFirebase
 
-    fun login(email: String, password: String, context: Context) {
-        val errorMessage = if(email.isBlank() || password.isBlank()) {
-            R.string.error_input_empty
-        } else if(!Patterns.EMAIL_ADDRESS.matcher(email).matches()){
-            R.string.error_not_a_valid_email
-        } else null
+    private val _state: MutableState<LoginState> = mutableStateOf(LoginState())
+    val state: State<LoginState> = _state
 
-        errorMessage?.let {
-            state.value = state.value.copy(errorMessage = it)
-            return
-        }
+    private val _eventFlow = MutableSharedFlow<UiEvent>()
+    val eventFlow = _eventFlow.asSharedFlow()
 
-        viewModelScope.launch {
-            state.value = state.value.copy(displayProgressBar = true)
-
-            logInWithMailAndPassword(
-                email = email,
-                password = password,
-                context = context,
-                onLoginSuccess = {
-                    state.value = state.value.copy(email = it, successLogin = true, displayProgressBar = false)
-                },
-                onLoginFailure = {
-                    state.value = state.value.copy(errorMessage = R.string.error_invalid_credentials, displayProgressBar = false)
-                }
-            )
+    fun getAuthState() = liveData(Dispatchers.IO) {
+        repo.getFirebaseAuthState().collect { response ->
+            emit(response)
         }
     }
 
-    fun oneTapGoogleSignIn(
-        launcher: ManagedActivityResultLauncher<IntentSenderRequest, ActivityResult>,
-        oneTapClient: SignInClient,
-        context: Context
-    ) {
-        val signInRequest = BeginSignInRequest.builder()
-                .setGoogleIdTokenRequestOptions(
-                    BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
-                        .setSupported(true)
-                        // Your server's client ID, not your Android client ID.
-                        .setServerClientId(context.getString(R.string.default_web_client_id))
-                        // Only show accounts previously used to sign in.
-                        .setFilterByAuthorizedAccounts(true)
-                        .build()
-                ).build()
-
-        viewModelScope.launch {
-            state.value = state.value.copy(displayGoogleProgressBar = true)
-            oneTapClient.beginSignIn(signInRequest)
-                .addOnSuccessListener {
-                    performAuthentication(
-                        launcher,
-                        it
-                    )
-                }.addOnFailureListener {
-                    oneTapSignUp(
-                        launcher,
-                        oneTapClient,
-                        context
-                    )
+    private fun oneTapSignIn() = viewModelScope.launch {
+        repo.oneTapSignInWithGoogle().collect { response ->
+            when(response) {
+                is Error -> response.e?.let {
+                    if (it.message == SIGN_IN_ERROR_MESSAGE) {
+                        oneTapSignUp()
+                    } else {
+                        showGoogleErrorMessage()
+                    }
                 }
-        }
-    }
-
-    private fun oneTapSignUp(
-        launcher: ManagedActivityResultLauncher<IntentSenderRequest, ActivityResult>,
-        oneTapClient: SignInClient,
-        context: Context
-    ) {
-
-        val signUpRequest = BeginSignInRequest.builder()
-            .setGoogleIdTokenRequestOptions(
-                BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
-                    .setSupported(true)
-                    // Your server's client ID, not your Android client ID.
-                    .setServerClientId(context.getString(R.string.default_web_client_id))
-                    // Only show accounts previously used to sign in.
-                    .setFilterByAuthorizedAccounts(false)
-                    .build()
-            ).build()
-
-        oneTapClient.beginSignIn(signUpRequest)
-            .addOnSuccessListener {
-                performAuthentication(
-                    launcher,
-                    it
-                )
-                state.value = state.value.copy(firstTimeLogInWithGoogle = true)
-            }.addOnFailureListener {
-                state.value = state.value.copy(errorMessage = R.string.error_google, displayGoogleProgressBar = false)
+                Loading -> showGoogleProgressBar()
+                is Success -> response.data?.let {
+                    _eventFlow.emit(UiEvent.ShowGoogleIntent(it))
+                }
             }
+        }
     }
 
-    private fun performAuthentication(
-        launcher: ManagedActivityResultLauncher<IntentSenderRequest, ActivityResult>,
-        it: BeginSignInResult
-    ) {
-        val intent = IntentSenderRequest.Builder(it.pendingIntent.intentSender).build()
-        launcher.launch(intent)
+    private fun oneTapSignUp() = viewModelScope.launch {
+        repo.oneTapSignUpWithGoogle().collect { response ->
+            when(response) {
+                is Error -> response.e?.let {
+                    showGoogleErrorMessage()
+                }
+                Loading -> showGoogleProgressBar()
+                is Success -> response.data?.let {
+                    _eventFlow.emit(UiEvent.ShowGoogleIntent(it))
+                }
+            }
+        }
+    }
+
+    fun signInWithGoogle(googleCredential: AuthCredential) = viewModelScope.launch {
+        repo.firebaseSignInWithGoogle(googleCredential).collect { response ->
+            when(response) {
+                is Loading -> showGoogleProgressBar()
+                is Success -> response.data?.let { isNewUser ->
+                    if (isNewUser) {
+                        createUser()
+                    } else {
+                        _eventFlow.emit(UiEvent.UserLoggedIn)
+                    }
+                }
+                is Error -> response.e?.let {
+                    showGoogleErrorMessage()
+                }
+            }
+        }
+    }
+
+    private suspend fun signInWithMailAndPassword() = viewModelScope.launch {
+        val email = _state.value.email
+        val password = _state.value.password
+        repo.logInWithMailAndPassword(email, password).collect { response ->
+            when(response) {
+                is Loading -> showProgressBar()
+                is Success -> response.data?.let { isUserLoggedIn ->
+                    if (isUserLoggedIn) {
+                        _eventFlow.emit(UiEvent.UserLoggedIn)
+                    }
+                }
+                is Error -> response.e?.let {
+                    showLogInErrorMessage()
+                }
+            }
+        }
+    }
+
+    private fun createUser() = viewModelScope.launch {
+        repo.createUserInFirestore().collect { response ->
+            when(response) {
+                is Loading -> showGoogleProgressBar()
+                is Success -> response.data?.let { isUserCreated ->
+                    if (isUserCreated) {
+                        _eventFlow.emit(UiEvent.UserLoggedIn)
+                    }
+                }
+                is Error -> response.e?.let {
+                    showGoogleErrorMessage()
+                }
+            }
+        }
     }
 
     fun hideErrorDialog() {
-        state.value = state.value.copy(
-            errorMessage = null
+        _state.value = _state.value.copy(
+            errorMessage = null,
         )
     }
 
-    fun loginWithCredentials(googleIdToken: String?, context: Context) {
-        viewModelScope.launch {
-            loginWithGoogle(
-                googleIdToken = googleIdToken,
-                context = context,
-                onLoginSuccess = {
-                    state.value = state.value.copy(email = it.email!!, displayGoogleProgressBar = false, successLogin = true)
-                    if(state.value.firstTimeLogInWithGoogle) {
-                        addUserAdditionalData(
-                            it,
-                            hashMapOf(
-                                DISPLAY_NAME to it.displayName,
-                                PROFILE_PICTURE to it.photoUrl
-                            )
-                        )
-                    }
-                },
-                onLoginFailure = {
-                    state.value = state.value.copy(errorMessage = R.string.error_google, displayGoogleProgressBar = false)
-                }
-            )
+    fun onEvent(event: LoginEvent) {
+        when (event) {
+            LoginEvent.LoginInWithMail -> viewModelScope.launch {
+                showProgressBar()
+                signInWithMailAndPassword()
+            }
+            is LoginEvent.LoginWithGoogle -> viewModelScope.launch {
+                showGoogleProgressBar()
+                oneTapSignIn()
+            }
+            is LoginEvent.EmailEntered -> {
+                _state.value = _state.value.copy(
+                    email = event.text
+                )
+            }
+            is LoginEvent.PasswordEntered -> {
+                _state.value = _state.value.copy(
+                    password = event.text
+                )
+            }
         }
     }
 
+    private fun showGoogleProgressBar() {
+        _state.value = _state.value.copy(
+            displayGoogleProgressBar = true
+        )
+    }
+
+    fun hideGoogleProgressBar() {
+        _state.value = _state.value.copy(
+            displayGoogleProgressBar = false
+        )
+    }
+
+    private fun showProgressBar() {
+        _state.value = _state.value.copy(
+            displayProgressBar = true
+        )
+    }
+
+    fun showGoogleErrorMessage() {
+        _state.value = _state.value.copy(
+            errorMessage = R.string.error_google,
+            displayGoogleProgressBar = false
+        )
+    }
+
+    private fun showLogInErrorMessage() {
+        _state.value = _state.value.copy(
+            errorMessage = R.string.error_invalid_credentials,
+            displayProgressBar = false,
+        )
+    }
+
+    sealed class UiEvent {
+        data class ShowGoogleIntent(val beginSignInResult: BeginSignInResult): UiEvent()
+
+        object UserLoggedIn: UiEvent()
+    }
 }

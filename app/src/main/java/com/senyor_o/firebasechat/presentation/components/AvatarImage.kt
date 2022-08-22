@@ -21,7 +21,7 @@ fun AvatarImage(
     imageUrl: String?,
     modifier: Modifier
 ) {
-    if( !imageUrl.isNullOrEmpty() ){
+    if(!imageUrl.isNullOrEmpty() ){
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
                 .data(imageUrl)

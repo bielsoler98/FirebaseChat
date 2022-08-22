@@ -1,19 +1,13 @@
 package com.senyor_o.firebasechat.presentation.components
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Face
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -23,20 +17,20 @@ import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.senyor_o.firebasechat.utils.IMAGE_TYPE
-import com.senyor_o.firebasechat.utils.TEXT_TYPE
+import com.google.firebase.firestore.FieldValue
+import com.senyor_o.firebasechat.domain.model.Message
+import com.senyor_o.firebasechat.domain.model.User
+import com.senyor_o.firebasechat.utils.Constants.IMAGE_TYPE
+import com.senyor_o.firebasechat.utils.Constants.TEXT_TYPE
 
 private val ForeignOwnMessage = RoundedCornerShape(0.dp, 8.dp, 8.dp, 8.dp)
 private val AuthorOwnMessage = RoundedCornerShape(8.dp, 0.dp, 8.dp, 8.dp)
 
 @Composable
 fun MessageItem(
-    type: String,
-    content: String?,
+    message: Message,
+    user: User,
     isCurrentUser: Boolean,
-    userName: String?,
-    imageUrl: String?,
-    time: String
 ) {
     Column(
         modifier = Modifier
@@ -51,7 +45,7 @@ fun MessageItem(
         ) {
             if(!isCurrentUser) {
                 AvatarImage(
-                    imageUrl = imageUrl,
+                    imageUrl = user.ppf,
                     modifier = Modifier
                         .size(32.dp)
                 )
@@ -65,7 +59,7 @@ fun MessageItem(
                 modifier = Modifier
                     .background(
                         if (isCurrentUser) {
-                            MaterialTheme.colorScheme.primary
+                            MaterialTheme.colors.primary
                         } else {
                             Color.LightGray
                         },
@@ -78,19 +72,19 @@ fun MessageItem(
                     .padding(8.dp),
                 horizontalAlignment = Alignment.Start
             ) {
-                if(!isCurrentUser && !userName.isNullOrBlank()) {
+                if(!isCurrentUser && user.displayName.isNotBlank()) {
                     Text(
                         modifier = Modifier
                             .padding(horizontal = 8.dp, vertical = 2.dp)
                         ,
                         fontWeight = FontWeight.Bold,
-                        text = userName,
-                        style = MaterialTheme.typography.titleMedium
+                        text = user.displayName,
+                        style = MaterialTheme.typography.subtitle2
                     )
                 }
                 ConstraintLayout {
                     val (contentRef, timeRef) = createRefs()
-                    if (type == TEXT_TYPE && !content.isNullOrEmpty()) {
+                    if (message.contentType == TEXT_TYPE && message.content.isNotEmpty()) {
                         Text(
                             modifier = Modifier
                                 .padding(horizontal = 8.dp, vertical = 4.dp)
@@ -98,10 +92,10 @@ fun MessageItem(
                                     top.linkTo(parent.top)
                                     start.linkTo(parent.start)
                                 },
-                            text = content,
-                            style = MaterialTheme.typography.titleLarge
+                            text = message.content,
+                            style = MaterialTheme.typography.subtitle1
                         )
-                    } else if(type == IMAGE_TYPE && !content.isNullOrEmpty()) {
+                    } else if(message.contentType == IMAGE_TYPE && message.content.isNotEmpty()) {
                         AsyncImage(
                             modifier = Modifier
                                 .size(450.dp)
@@ -111,7 +105,7 @@ fun MessageItem(
                                     start.linkTo(parent.start)
                                 },
                             model = ImageRequest.Builder(LocalContext.current)
-                                .data(content)
+                                .data(message.content)
                                 .crossfade(true)
                                 .build(),
                             contentDescription = null,
@@ -125,25 +119,28 @@ fun MessageItem(
                                 end.linkTo(parent.end)
                                 bottom.linkTo(parent.bottom)
                             },
-                        text = time,
-                        style = MaterialTheme.typography.bodySmall
+                        text = message.sentDate.toString(),
+                        style = MaterialTheme.typography.caption
                     )
                 }
             }
-
         }
     }
 }
 
-@Preview
-@Composable
-fun MessageItemPreview() {
-    MessageItem(
-        TEXT_TYPE,
-        "Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!",
-        false,
-        "Perry",
-        null,
-        "00:20",
-    )
-}
+//@Preview
+//@Composable
+//fun MessageItemPreview() {
+//    MessageItem(
+//        message = Message(
+//            TEXT_TYPE,
+//            "Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!Hello World!",
+//            25L,
+//            "Perry",
+//        ),
+//        user = User(
+//
+//        ),
+//        isCurrentUser = false
+//    )
+//}

@@ -1,14 +1,12 @@
 package com.senyor_o.firebasechat.presentation.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
@@ -19,27 +17,30 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 
-@ExperimentalMaterial3Api
 @Composable
 fun TransparentTextField(
     modifier: Modifier = Modifier,
-    textFieldValue: MutableState<String>,
+    textFieldValue: String,
     textLabel: String,
     maxChar: Int? = null,
     capitalization: KeyboardCapitalization = KeyboardCapitalization.None,
     keyboardType: KeyboardType,
     keyboardActions: KeyboardActions,
+    onValueChanged: (String) -> Unit,
     imeAction: ImeAction,
-    trailingIcon: @Composable() (() -> Unit)? = null,
+    trailingIcon: @Composable (() -> Unit)? = null,
     visualTransformation: VisualTransformation = VisualTransformation.None
 ) {
     TextField(
         modifier = modifier
             .fillMaxWidth(),
-        value = textFieldValue.value.take(maxChar ?: 40),
-        onValueChange = { textFieldValue.value = it },
+        value = textFieldValue.take(maxChar ?: 40),
+        onValueChange = { onValueChanged(it) },
         label = {
-            Text(text = textLabel)
+            Text(
+                text = textLabel,
+                style = MaterialTheme.typography.subtitle1
+            )
         },
         trailingIcon = trailingIcon,
         keyboardOptions = KeyboardOptions(
@@ -50,20 +51,16 @@ fun TransparentTextField(
         keyboardActions = keyboardActions,
         visualTransformation = visualTransformation,
         colors = TextFieldDefaults.textFieldColors(
-            containerColor = Color.Transparent
+            backgroundColor = Color.Transparent
         )
     )
 }
 
-@ExperimentalMaterial3Api
 @Preview
 @Composable
 fun TransparentTextFieldPreview() {
-    val passwordValue = rememberSaveable {
-        mutableStateOf("")
-    }
     TransparentTextField(
-        textFieldValue = passwordValue,
+        textFieldValue = "passwordValue",
         textLabel = "Password",
         keyboardType = KeyboardType.Password,
         keyboardActions = KeyboardActions(
@@ -79,6 +76,7 @@ fun TransparentTextFieldPreview() {
                     contentDescription = "toggle Password Icon")
             }
         },
+        onValueChanged = {},
         visualTransformation = VisualTransformation.None
     )
 }

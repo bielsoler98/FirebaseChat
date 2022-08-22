@@ -1,30 +1,39 @@
 package com.senyor_o.firebasechat.presentation.registration
 
-import android.content.Context
 import android.util.Patterns
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.google.firebase.auth.FirebaseAuth
 import com.senyor_o.firebasechat.R
-import com.senyor_o.firebasechat.utils.DISPLAY_NAME
-import com.senyor_o.firebasechat.utils.EMAIL_METHOD
-import com.senyor_o.firebasechat.utils.PROFILE_PICTURE
-import com.senyor_o.firebasechat.utils.addUserAdditionalData
+import com.senyor_o.firebasechat.domain.model.Response
+import com.senyor_o.firebasechat.domain.repository.AuthRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class RegisterViewModel: ViewModel() {
+@HiltViewModel
+class RegisterViewModel @Inject constructor(
+    private val repo: AuthRepository,
+): ViewModel() {
 
-    val state: MutableState<RegisterState> = mutableStateOf(RegisterState())
+    private val _state: MutableState<RegisterState> = mutableStateOf(RegisterState())
+    val state: State<RegisterState> = _state
 
-    fun register(
-        name: String,
-        email: String,
-        password: String,
-        confirmPassword: String,
-        context: Context
-    ) {
+    private val _eventFlow = MutableSharedFlow<UiEvent>()
+    val eventFlow = _eventFlow.asSharedFlow()
+
+    suspend fun register(){
+
+        val name = _state.value.name
+        val email = _state.value.email
+        val password = _state.value.password
+        val confirmPassword = _state.value.confirmPassword
+
         val errorMessage = if(name.isBlank() || email.isBlank() ||  password.isBlank() || confirmPassword.isBlank()){
             R.string.error_input_empty
         } else if(!Patterns.EMAIL_ADDRESS.matcher(email).matches()){
@@ -34,43 +43,69 @@ class RegisterViewModel: ViewModel() {
         } else null
 
         errorMessage?.let {
-            state.value = state.value.copy(errorMessage = errorMessage)
+            _state.value = state.value.copy(errorMessage = errorMessage)
             return
         }
 
-        viewModelScope.launch {
-            state.value = state.value.copy(displayProgressBar = true)
-
-            FirebaseAuth.getInstance().
-                createUserWithEmailAndPassword(email, password)
-                .addOnCompleteListener {
-                    if (it.isSuccessful) {
-                        state.value = state.value.copy(email = it.result.user?.email!!, successRegister = true)
-                        val prefs = context.getSharedPreferences(context.getString(R.string.prefs_file), Context.MODE_PRIVATE).edit()
-                        prefs.putString("provider", EMAIL_METHOD)
-                        prefs.putString("email", it.result.user?.email!!)
-                        prefs.putString("password", password)
-                        prefs.apply()
-                        addUserAdditionalData(
-                            it.result.user!!,
-                            hashMapOf(
-                                DISPLAY_NAME to name,
-                                PROFILE_PICTURE to ""
-                            )
-                        )
-                    } else {
-                        state.value = state.value.copy(errorMessage = R.string.error_occurred)
+        repo.createUserWithEmailAndPassword(name, email, password).collect { response ->
+            when(response) {
+                is Response.Loading -> _state.value = state.value.copy(
+                    displayProgressBar = true
+                )
+                is Response.Success -> response.data?.let { isUserCreated ->
+                    if (isUserCreated) {
+                        _eventFlow.emit(UiEvent.UserCreated)
                     }
+                }
+                is Response.Error -> response.e?.let {
+                    showError()
+                }
             }
+        }
+    }
 
-            state.value = state.value.copy(displayProgressBar = false)
+    fun onEvent(event: RegisterEvent) {
+        when (event) {
+            is RegisterEvent.ConfirmPasswordEntered -> {
+                _state.value = _state.value.copy(
+                    confirmPassword = event.text
+                )
+            }
+            is RegisterEvent.EmailEntered -> {
+                _state.value = _state.value.copy(
+                    email = event.text
+                )
+            }
+            is RegisterEvent.NameEntered -> {
+                _state.value = _state.value.copy(
+                    name = event.text
+                )
+            }
+            is RegisterEvent.PasswordEntered -> {
+                _state.value = _state.value.copy(
+                    password = event.text
+                )
+            }
+            RegisterEvent.RegisterUser -> viewModelScope.launch {
+                register()
+            }
         }
     }
 
     fun hideErrorDialog() {
-        state.value = state.value.copy(
+        _state.value = state.value.copy(
             errorMessage = null
         )
     }
 
+    fun showError() {
+        _state.value = state.value.copy(
+            errorMessage = R.string.error_occurred,
+            displayProgressBar = false
+        )
+    }
+
+    sealed class UiEvent {
+        object UserCreated: UiEvent()
+    }
 }

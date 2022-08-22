@@ -1,8 +1,8 @@
 package com.senyor_o.firebasechat.presentation.login
 
 import android.app.Activity
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -10,18 +10,16 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
@@ -33,58 +31,61 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.google.android.gms.auth.api.identity.Identity
-import com.google.android.gms.auth.api.identity.SignInClient
+import com.google.android.gms.auth.api.identity.BeginSignInResult
 import com.google.android.gms.common.api.ApiException
-import com.google.android.gms.common.api.CommonStatusCodes
+import com.google.firebase.auth.GoogleAuthProvider
 import com.senyor_o.firebasechat.R
-import com.senyor_o.firebasechat.presentation.components.RoundedButton
-import com.senyor_o.firebasechat.presentation.components.TransparentTextField
+import com.senyor_o.firebasechat.domain.model.Response.*
 import com.senyor_o.firebasechat.presentation.components.EventDialog
+import com.senyor_o.firebasechat.presentation.components.RoundedButton
 import com.senyor_o.firebasechat.presentation.components.SocialMediaButton
-import com.senyor_o.firebasechat.ui.theme.FirebaseChatTheme
+import com.senyor_o.firebasechat.presentation.components.TransparentTextField
 import com.senyor_o.firebasechat.ui.theme.GMAILCOLOR
+import com.senyor_o.firebasechat.utils.Constants.SIGN_IN_ERROR_MESSAGE
+import kotlinx.coroutines.flow.collectLatest
 
-@ExperimentalMaterial3Api
 @Composable
 fun LoginScreen(
-    viewModel: LoginViewModel,
-    onNavigateToRegister: () -> Unit,
+    viewModel: LoginViewModel = hiltViewModel(),
+    navigateToRegister: () -> Unit,
+    navigateToHomeScreen: () -> Unit
 ) {
-    val emailValue = rememberSaveable{ mutableStateOf("") }
-    val passwordValue = rememberSaveable{ mutableStateOf("") }
     var passwordVisibility by remember { mutableStateOf(false) }
     val focusManager = LocalFocusManager.current
-    val context = LocalContext.current
+    val state = viewModel.state.value
 
-    val oneTapClient: SignInClient = remember {
-        Identity.getSignInClient(context)
-    }
-
-    val oneTaplauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartIntentSenderForResult()
-    ) { result->
+    val launcher =  rememberLauncherForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             try {
-                val credentials = oneTapClient.getSignInCredentialFromIntent(result.data)
+                val credentials = viewModel.oneTapClient.getSignInCredentialFromIntent(result.data)
                 val googleIdToken = credentials.googleIdToken
-                viewModel.loginWithCredentials(googleIdToken, context)
-            } catch (apiException: ApiException) {
-                when(apiException.statusCode) {
-                    CommonStatusCodes.CANCELED -> {
-                        Log.d("Auth", "One-tap dialog canceled")
-                    }
-                    CommonStatusCodes.NETWORK_ERROR -> {
-                        viewModel.state.value = viewModel.state.value.copy(errorMessage = R.string.network_occurred)
-                    }
-                    else -> {
-                        viewModel.state.value = viewModel.state.value.copy(errorMessage = R.string.error_google)
-                    }
+                val googleCredentials = GoogleAuthProvider.getCredential(googleIdToken, null)
+                viewModel.signInWithGoogle(googleCredentials)
+            } catch (it: ApiException) {
+                viewModel.showGoogleErrorMessage()
+            }
+        } else {
+            viewModel.hideGoogleProgressBar()
+        }
+    }
+
+    fun launch(
+        signInResult: BeginSignInResult
+    ) {
+        val intent = IntentSenderRequest.Builder(signInResult.pendingIntent.intentSender).build()
+        launcher.launch(intent)
+    }
+
+    LaunchedEffect(key1 = true) {
+        viewModel.eventFlow.collectLatest { event ->
+            when(event) {
+                is LoginViewModel.UiEvent.ShowGoogleIntent -> {
+                    launch(event.beginSignInResult)
                 }
+                LoginViewModel.UiEvent.UserLoggedIn -> navigateToHomeScreen()
             }
         }
     }
@@ -92,7 +93,7 @@ fun LoginScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(MaterialTheme.colors.background)
     ){
         Image(
             painter = painterResource(id = R.drawable.logo),
@@ -115,7 +116,7 @@ fun LoginScreen(
                         .constrainAs(surface) {
                             bottom.linkTo(parent.bottom)
                         },
-                    color = MaterialTheme.colorScheme.background,
+                    color = MaterialTheme.colors.surface,
                     shape = RoundedCornerShape(
                         topStartPercent = 8,
                         topEndPercent = 8
@@ -129,15 +130,15 @@ fun LoginScreen(
                     ){
                         Text(
                             text = "Welcome Back!",
-                            style = MaterialTheme.typography.headlineLarge.copy(
+                            style = MaterialTheme.typography.h3.copy(
                                 fontWeight = FontWeight.Medium
                             )
                         )
 
                         Text(
                             text = "Login to your Account",
-                            style = MaterialTheme.typography.headlineMedium.copy(
-                                color = MaterialTheme.colorScheme.primary
+                            style = MaterialTheme.typography.h5.copy(
+                                color = MaterialTheme.colors.primary
                             )
                         )
 
@@ -149,7 +150,7 @@ fun LoginScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ){
                             TransparentTextField(
-                                textFieldValue = emailValue,
+                                textFieldValue = state.email,
                                 textLabel = "Email",
                                 keyboardType = KeyboardType.Email,
                                 keyboardActions = KeyboardActions(
@@ -157,18 +158,20 @@ fun LoginScreen(
                                         focusManager.moveFocus(FocusDirection.Down)
                                     }
                                 ),
-                                imeAction = ImeAction.Next
+                                imeAction = ImeAction.Next,
+                                onValueChanged = {
+                                    viewModel.onEvent(LoginEvent.EmailEntered(it))
+                                }
                             )
 
                             TransparentTextField(
-                                textFieldValue = passwordValue,
+                                textFieldValue = state.password,
                                 textLabel = "Password",
                                 keyboardType = KeyboardType.Password,
                                 keyboardActions = KeyboardActions(
                                     onDone = {
                                         focusManager.clearFocus()
-
-                                        viewModel.login(emailValue.value, passwordValue.value, context = context)
+                                        viewModel.onEvent(LoginEvent.LoginInWithMail)
                                     }
                                 ),
                                 imeAction = ImeAction.Done,
@@ -192,13 +195,16 @@ fun LoginScreen(
                                     VisualTransformation.None
                                 } else {
                                     PasswordVisualTransformation()
+                                },
+                                onValueChanged = {
+                                    viewModel.onEvent(LoginEvent.PasswordEntered(it))
                                 }
                             )
 
                             Text(
                                 modifier = Modifier.fillMaxWidth(),
                                 text = "Forgot Password?",
-                                style = MaterialTheme.typography.bodyLarge,
+                                style = MaterialTheme.typography.subtitle1,
                                 textAlign = TextAlign.End
                             )
                         }
@@ -210,9 +216,9 @@ fun LoginScreen(
                         ) {
                             RoundedButton(
                                 text = "Login",
-                                displayProgressBar = viewModel.state.value.displayProgressBar,
+                                displayProgressBar = state.displayProgressBar,
                                 onClick = {
-                                    viewModel.login(emailValue.value, passwordValue.value, context)
+                                    viewModel.onEvent(LoginEvent.LoginInWithMail)
                                 }
                             )
                         }
@@ -232,7 +238,7 @@ fun LoginScreen(
                                 Text(
                                     modifier = Modifier.padding(8.dp),
                                     text = "OR",
-                                    style = MaterialTheme.typography.headlineSmall.copy(
+                                    style = MaterialTheme.typography.h6.copy(
                                         fontWeight = FontWeight.Black
                                     )
                                 )
@@ -247,8 +253,8 @@ fun LoginScreen(
                             Text(
                                 modifier = Modifier.fillMaxWidth(),
                                 text = "Login with",
-                                style = MaterialTheme.typography.bodyLarge.copy(
-                                    MaterialTheme.colorScheme.primary
+                                style = MaterialTheme.typography.h5.copy(
+                                    MaterialTheme.colors.primary
                                 ),
                                 textAlign = TextAlign.Center
                             )
@@ -261,22 +267,13 @@ fun LoginScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ){
-//                            SocialMediaButton(
-//                                text = "Login with Facebook",
-//                                onClick = {
-//                                    facebookViewModel.login(context)
-//                                },
-//                                socialMediaColor = FACEBOOKCOLOR,
-//                                displayProgressBar = viewModel.state.value.displayFacebookProgressBar
-//                            )
-
                             SocialMediaButton(
                                 text = "Login with Gmail",
                                 onClick = {
-                                    viewModel.oneTapGoogleSignIn(oneTaplauncher, oneTapClient, context)
+                                    viewModel.onEvent(LoginEvent.LoginWithGoogle)
                                 },
                                 socialMediaColor = GMAILCOLOR,
-                                displayProgressBar = viewModel.state.value.displayGoogleProgressBar
+                                displayProgressBar = state.displayGoogleProgressBar
                             )
 
                             ClickableText(
@@ -285,7 +282,7 @@ fun LoginScreen(
 
                                     withStyle(
                                         style = SpanStyle(
-                                            color = MaterialTheme.colorScheme.primary,
+                                            color = MaterialTheme.colors.primary,
                                             fontWeight = FontWeight.Bold
                                         )
                                     ){
@@ -293,7 +290,7 @@ fun LoginScreen(
                                     }
                                 }
                             ){
-                                onNavigateToRegister()
+                                navigateToRegister()
                             }
                         }
                     }
@@ -301,36 +298,11 @@ fun LoginScreen(
             }
         }
 
-        if(viewModel.state.value.errorMessage != null){
+        if(state.errorMessage != null){
             EventDialog(
-                errorMessage = viewModel.state.value.errorMessage!!,
+                errorMessage = state.errorMessage,
                 onDismiss = viewModel::hideErrorDialog
             )
         }
     }
 }
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true)
-@Composable
-fun LoginScreenPreview() {
-    FirebaseChatTheme {
-        LoginScreen(
-            viewModel = hiltViewModel(),
-            onNavigateToRegister = { }
-        )
-    }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-

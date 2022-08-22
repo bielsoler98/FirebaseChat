@@ -6,10 +6,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material.Text
+import androidx.compose.material.TextField
+import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -20,16 +19,16 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 
-@ExperimentalMaterial3Api
 @Composable
 fun SendMessageBar(
     modifier: Modifier = Modifier,
-    textFieldValue: MutableState<String>,
+    textFieldValue: String,
     textLabel: String,
     capitalization: KeyboardCapitalization = KeyboardCapitalization.None,
     keyboardType: KeyboardType,
     keyboardActions: KeyboardActions,
     imeAction: ImeAction,
+    onValueChanged: (String) -> Unit,
     trailingIcon: @Composable (() -> Unit)? = null,
     visualTransformation: VisualTransformation = VisualTransformation.None
 ) {
@@ -41,8 +40,8 @@ fun SendMessageBar(
         modifier = modifier
             .fillMaxWidth()
             .verticalScroll(scrollState),
-        value = textFieldValue.value,
-        onValueChange = { textFieldValue.value = it },
+        value = textFieldValue,
+        onValueChange = { onValueChanged(it) },
         placeholder = {
             Text(text = textLabel)
         },

@@ -1,21 +1,22 @@
 package com.senyor_o.firebasechat.presentation.registration
 
-import android.content.Context
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.SpanStyle
@@ -29,28 +30,33 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.senyor_o.firebasechat.domain.model.Response
 import com.senyor_o.firebasechat.presentation.components.RoundedButton
 import com.senyor_o.firebasechat.presentation.components.TransparentTextField
 import com.senyor_o.firebasechat.presentation.components.EventDialog
+import com.senyor_o.firebasechat.presentation.components.ProgressBar
 import com.senyor_o.firebasechat.ui.theme.FirebaseChatTheme
+import kotlinx.coroutines.flow.collectLatest
 
-@ExperimentalMaterial3Api
 @Composable
 fun RegistrationScreen(
     viewModel: RegisterViewModel = hiltViewModel(),
+    navigateToHomeScreen: () -> Unit,
     onBack: () -> Unit
 ) {
-
-    val nameValue = remember { mutableStateOf("") }
-    val emailValue = remember { mutableStateOf("") }
-    val passwordValue = remember { mutableStateOf("") }
-    val confirmPasswordValue = remember { mutableStateOf("") }
-
     var passwordVisibility by remember { mutableStateOf(false) }
     var confirmPasswordVisibility by remember { mutableStateOf(false) }
-
+    val state = viewModel.state.value
     val focusManager = LocalFocusManager.current
-    val context = LocalContext.current
+
+    LaunchedEffect(key1 = true) {
+        viewModel.eventFlow.collectLatest { event ->
+            when(event) {
+                RegisterViewModel.UiEvent.UserCreated -> navigateToHomeScreen()
+            }
+        }
+    }
+
     Box(
       modifier = Modifier.fillMaxWidth()
     ){
@@ -70,14 +76,14 @@ fun RegistrationScreen(
                     Icon(
                         imageVector = Icons.Default.ArrowBack,
                         contentDescription = "Back Icon",
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = MaterialTheme.colors.primary
                     )
                 }
 
                 Text(
-                    text = "Create An Account",
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        color = MaterialTheme.colorScheme.primary
+                    text = "Create an Account",
+                    style = MaterialTheme.typography.h4.copy(
+                        color = MaterialTheme.colors.primary
                     )
                 )
             }
@@ -89,7 +95,7 @@ fun RegistrationScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 TransparentTextField(
-                    textFieldValue = nameValue,
+                    textFieldValue = state.name,
                     textLabel = "Name",
                     keyboardType = KeyboardType.Text,
                     keyboardActions = KeyboardActions(
@@ -97,21 +103,27 @@ fun RegistrationScreen(
                             focusManager.moveFocus(FocusDirection.Down)
                         }
                     ),
-                    imeAction = ImeAction.Next
+                    imeAction = ImeAction.Next,
+                    onValueChanged = {
+                        viewModel.onEvent(RegisterEvent.NameEntered(it))
+                    }
                 )
 
                 TransparentTextField(
-                    textFieldValue = emailValue,
+                    textFieldValue = state.email,
                     textLabel = "Email",
                     keyboardType = KeyboardType.Email,
                     keyboardActions = KeyboardActions(
                         onNext = { focusManager.moveFocus(FocusDirection.Down) }
                     ),
-                    imeAction = ImeAction.Next
+                    imeAction = ImeAction.Next,
+                    onValueChanged = {
+                        viewModel.onEvent(RegisterEvent.EmailEntered(it))
+                    }
                 )
 
                 TransparentTextField(
-                    textFieldValue = passwordValue,
+                    textFieldValue = state.password,
                     textLabel = "Password",
                     keyboardType = KeyboardType.Password,
                     keyboardActions = KeyboardActions(
@@ -132,24 +144,21 @@ fun RegistrationScreen(
                             )
                         }
                     },
-                    visualTransformation = if (passwordVisibility) VisualTransformation.None else PasswordVisualTransformation()
+                    visualTransformation = if (passwordVisibility) VisualTransformation.None else PasswordVisualTransformation(),
+                    onValueChanged = {
+                        viewModel.onEvent(RegisterEvent.PasswordEntered(it))
+                    }
                 )
 
                 TransparentTextField(
-                    textFieldValue = confirmPasswordValue,
+                    textFieldValue = state.confirmPassword,
                     textLabel = "Confirm Password",
                     keyboardType = KeyboardType.Password,
                     keyboardActions = KeyboardActions(
                         onDone = {
                             focusManager.clearFocus()
 
-                            viewModel.register(
-                                nameValue.value,
-                                emailValue.value,
-                                passwordValue.value,
-                                confirmPasswordValue.value,
-                                context
-                            )
+                            viewModel.onEvent(RegisterEvent.RegisterUser)
                         }
                     ),
                     imeAction = ImeAction.Done,
@@ -165,22 +174,19 @@ fun RegistrationScreen(
                             )
                         }
                     },
-                    visualTransformation = if (confirmPasswordVisibility) VisualTransformation.None else PasswordVisualTransformation()
+                    visualTransformation = if (confirmPasswordVisibility) VisualTransformation.None else PasswordVisualTransformation(),
+                    onValueChanged = {
+                        viewModel.onEvent(RegisterEvent.ConfirmPasswordEntered(it))
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
                 RoundedButton(
                     text = "Sign Up",
-                    displayProgressBar = viewModel.state.value.displayProgressBar,
+                    displayProgressBar = state.displayProgressBar,
                     onClick = {
-                        viewModel.register(
-                            nameValue.value,
-                            emailValue.value,
-                            passwordValue.value,
-                            confirmPasswordValue.value,
-                            context
-                        )
+                        viewModel.onEvent(RegisterEvent.RegisterUser)
                     }
                 )
 
@@ -190,7 +196,7 @@ fun RegistrationScreen(
 
                         withStyle(
                             style = SpanStyle(
-                                color = MaterialTheme.colorScheme.primary,
+                                color = MaterialTheme.colors.primary,
                                 fontWeight = FontWeight.Bold
                             )
                         ){
@@ -204,8 +210,8 @@ fun RegistrationScreen(
             }
         }
 
-        if(viewModel.state.value.errorMessage != null) {
-            EventDialog(errorMessage = viewModel.state.value.errorMessage!!,
+        if(state.errorMessage != null) {
+            EventDialog(errorMessage = state.errorMessage,
                 onDismiss = {
                     viewModel.hideErrorDialog()
                 }
@@ -214,14 +220,14 @@ fun RegistrationScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Preview(showBackground = true)
 @Composable
 fun RegistrationScreenPreview() {
     FirebaseChatTheme {
         RegistrationScreen(
             viewModel = hiltViewModel(),
-            onBack = {}
+            onBack = {},
+            navigateToHomeScreen = {}
         )
     }
 }

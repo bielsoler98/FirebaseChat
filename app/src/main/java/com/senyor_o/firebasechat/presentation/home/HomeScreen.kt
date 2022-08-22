@@ -1,24 +1,20 @@
 package com.senyor_o.firebasechat.presentation.home
 
-
-import android.icu.text.SimpleDateFormat
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -26,204 +22,206 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.google.firebase.auth.FirebaseAuth
+import com.google.android.gms.auth.api.identity.BeginSignInResult
 import com.senyor_o.firebasechat.R
-import com.senyor_o.firebasechat.presentation.components.DrawerHeader
-import com.senyor_o.firebasechat.presentation.components.MenuItem
-import com.senyor_o.firebasechat.presentation.components.MessageItem
-import com.senyor_o.firebasechat.presentation.components.SendMessageBar
+import com.senyor_o.firebasechat.domain.model.DrawerItem
+import com.senyor_o.firebasechat.domain.model.Response.*
+import com.senyor_o.firebasechat.presentation.components.*
+import com.senyor_o.firebasechat.presentation.registration.RegisterViewModel
 import com.senyor_o.firebasechat.ui.theme.FirebaseChatTheme
 import com.senyor_o.firebasechat.utils.*
+import com.senyor_o.firebasechat.utils.Constants.TEXT_TYPE
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.util.*
-import java.util.concurrent.TimeUnit
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
-    viewModel: HomeViewModel,
+    viewModel: HomeViewModel = hiltViewModel(),
+    navigateToLoginScreen: () -> Unit
 ) {
     val focusManager = LocalFocusManager.current
-    val context = LocalContext.current
-    val messageValue = rememberSaveable{ mutableStateOf("") }
     val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val scaffoldState = rememberScaffoldState()
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
-    LaunchedEffect(viewModel.state.value.messages.size){
+    val state = viewModel.state.value
+
+    LaunchedEffect(state.messages.size){
         listState.animateScrollToItem(
-            if (viewModel.state.value.messages.size > 0) {
-                viewModel.state.value.messages.size - 1
+            if (state.messages.isNotEmpty()) {
+                state.messages.size - 1
             } else {
                 0
             }
         )
     }
-    val addProfilePictureLauncher =  rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+
+
+    val addProfilePictureLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            uri?.let {
+                viewModel.onEvent(HomeEvent.ChangePff(it))
+            }
+        }
+    val sendImageMessage = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let {
-            viewModel.uploadPhoto(
-                uri,
-                name = FirebaseAuth.getInstance().currentUser?.uid!!,
-                callback = viewModel::addProfilePicture
-            )
+            viewModel.onEvent(HomeEvent.SendImageMessage(it))
         }
     }
-    val sendPhotoLauncher =  rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let {
-            viewModel.uploadPhoto(
-                uri,
-                name ="${FirebaseAuth.getInstance().currentUser?.uid!!}-${System.currentTimeMillis()}",
-                callback = {
-                    viewModel.addMessage(
-                        IMAGE_TYPE,
-                        it,
-                        onSuccess = {}
-                    )
-                }
-            )
-        }
-    }
+
     val items = listOf(
-        MenuItem(
+        DrawerItem(
+            id = 1,
             title = "Log Out",
-            contentDescription = "Log Out button",
             icon = Icons.Default.Logout,
             onClick = {
-                viewModel.logOut(context)
+                viewModel.onEvent(HomeEvent.SignOut)
             }
         )
     )
-    val selectedItem = remember { mutableStateOf(null) }
-    ModalNavigationDrawer(
-        drawerState = drawerState,
+
+    LaunchedEffect(key1 = true) {
+        viewModel.eventFlow.collectLatest { event ->
+            when(event) {
+                HomeViewModel.UiEvent.UserLoggedOut -> navigateToLoginScreen()
+                is HomeViewModel.UiEvent.ShowGalleryIntent -> {
+                    addProfilePictureLauncher.launch("image/*")
+                }
+            }
+        }
+    }
+
+    Scaffold(
+        scaffoldState = scaffoldState,
+        modifier = Modifier.background(MaterialTheme.colors.background),
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(id = R.string.app_name)) },
+                navigationIcon = {
+                    IconButton(
+                        onClick = {
+                            scope.launch {
+                                scaffoldState.drawerState.open()
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Menu,
+                            contentDescription = "Toggle Drawer"
+                        )
+                    }
+                }
+            )
+        },
+        drawerBackgroundColor = MaterialTheme.colors.background,
         drawerContent = {
             DrawerHeader(
-                viewModel.state.value.name,
-                viewModel.state.value.profileImage
+                state.name,
+                state.profileImage
             ) {
                 addProfilePictureLauncher.launch("image/*")
             }
             items.forEach { item ->
-                NavigationDrawerItem(
-                    icon = { Icon(item.icon, contentDescription = item.contentDescription) },
-                    label = { Text(item.title) },
-                    selected = item == selectedItem.value,
-                    onClick = {
-                        item.onClick()
+                DrawerMenuItem(
+                    item = item,
+                    onItemClick = {
+                        item.onClick(it)
                         scope.launch { drawerState.close() }
-                    },
-                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                    }
                 )
             }
-        }
-    ) {
-        Scaffold(
-            modifier = Modifier.background(MaterialTheme.colorScheme.background),
-            topBar = {
-                CenterAlignedTopAppBar(
-                    title = { Text(stringResource(id = R.string.app_name)) },
-                    navigationIcon = {
+        },
+        drawerGesturesEnabled = scaffoldState.drawerState.isOpen,
+        bottomBar = {
+            SendMessageBar(
+                modifier = Modifier.padding(8.dp),
+                textFieldValue = state.messageContent,
+                textLabel = "Enter a message...",
+                keyboardType = KeyboardType.Text,
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        focusManager.clearFocus()
+                    }
+                ),
+                trailingIcon = {
+                    Row {
                         IconButton(
                             onClick = {
-                                scope.launch {
-                                    if (drawerState.isClosed) {
-                                        drawerState.open()
-                                    } else {
-                                        drawerState.close()
-                                    }
+                                sendImageMessage.launch("image/*")
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AttachFile,
+                                contentDescription = "Send Message"
+                            )
+                        }
+                        Spacer(modifier = Modifier
+                            .width(
+                                8.dp
+                            )
+                        )
+                        IconButton(
+                            onClick = {
+                                if(state.messageContent.isNotEmpty()) {
+                                    viewModel.onEvent(HomeEvent.SendTextMessage)
                                 }
                             }
                         ) {
                             Icon(
-                                imageVector = Icons.Filled.Menu,
-                                contentDescription = "Toggle Drawer"
+                                imageVector = Icons.Default.Send,
+                                contentDescription = "Send Message"
                             )
                         }
                     }
-                )
-            },
-            containerColor = MaterialTheme.colorScheme.background,
-            bottomBar = {
-                SendMessageBar(
-                    modifier = Modifier.padding(8.dp),
-                    textFieldValue = messageValue,
-                    textLabel = "Enter a message...",
-                    keyboardType = KeyboardType.Text,
-                    keyboardActions = KeyboardActions(
-                        onDone = {
-                            focusManager.clearFocus()
-                        }
-                    ),
-                    trailingIcon = {
-                        Row {
-                            IconButton(
-                                onClick = {
-                                    sendPhotoLauncher.launch("image/*")
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.AttachFile,
-                                    contentDescription = "Send Message"
-                                )
-                            }
-                            Spacer(modifier = Modifier
-                                .width(
-                                    8.dp
-                                )
-                            )
-                            IconButton(
-                                onClick = {
-                                    if(!messageValue.value.isNullOrEmpty()) {
-                                        viewModel.addMessage(
-                                            TEXT_TYPE,
-                                            messageValue.value,
-                                            onSuccess = {
-                                                messageValue.value = ""
-                                            }
-                                        )
-                                    }
-                                }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Send,
-                                    contentDescription = "Send Message"
-                                )
-                            }
-                        }
 
-                    },
-                    imeAction = ImeAction.Done
-                )
-            },
-            content = { innerPadding ->
+                },
+                imeAction = ImeAction.Done,
+                onValueChanged = {
+                    viewModel.onEvent(HomeEvent.ContentMessageEntered(it))
+                }
+            )
+        },
+        content = { innerPadding ->
+            Box(
+                modifier = Modifier.fillMaxWidth().padding(innerPadding)
+            ){
                 LazyColumn(
                     modifier = Modifier
-                        .background(MaterialTheme.colorScheme.background)
-                        .padding(innerPadding),
+                        .fillMaxSize()
+                        .background(MaterialTheme.colors.background),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     state = listState
                 ) {
-                    viewModel.state.value.messages.forEach { message ->
+                    state.messages.sortedBy { it.first.sentDate }.forEach { messagePair ->
                         item {
                             MessageItem(
-                                type = message.contentType,
-                                content = message.content.observeAsState().value,
-                                isCurrentUser = message.isCurrentUser,
-                                time = message.sentDate,
-                                imageUrl = message.user.observeAsState().value?.ppf,
-                                userName = message.user.observeAsState().value?.displayName
+                                message = messagePair.first,
+                                user = messagePair.second,
+                                isCurrentUser = messagePair.second.uid == viewModel.currentUser?.uid,
                             )
                         }
                     }
                 }
             }
-        )
-    }
+            if(state.displayProgressBar) {
+                ProgressBar()
+            }
+
+            if(state.errorMessage != null) {
+                EventDialog(errorMessage = state.errorMessage,
+                    onDismiss = {
+                        viewModel.hideErrorDialog()
+                    }
+                )
+            }
+        }
+    )
 }
 
 @Preview(showBackground = true)
 @Composable
 fun HomeScreenPreview() {
     FirebaseChatTheme {
-        HomeScreen(viewModel = hiltViewModel())
+        HomeScreen(viewModel = hiltViewModel(), navigateToLoginScreen = {})
     }
 }

@@ -13,9 +13,4 @@
     <string name="error_unknown">An unknown error occurred</string>
     <string name="prefs_file">com.senyor_o.firebasechat.PREFERENCE_FILE_KEY</string>
 
-    <string name="facebook_app_id">807712314004796</string>
-    <string name="fb_login_protocol_scheme">fb807712314004796</string>
-    <string name="facebook_client_token">e3b193f519b093d397cb02a7b30c012e</string>
-    <string name="default_notification_channel_id">default_channel</string>
-
 </resources>

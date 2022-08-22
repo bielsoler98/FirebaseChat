@@ -4,10 +4,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material.Button
+import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,7 +29,7 @@ fun RoundedButton(
         ) {
             Text(
                 text = text,
-                style = MaterialTheme.typography.headlineSmall.copy(
+                style = MaterialTheme.typography.h6.copy(
                     color = Color.White
                 )
             )
@@ -37,7 +37,7 @@ fun RoundedButton(
     } else {
         CircularProgressIndicator(
             modifier = Modifier.size(50.dp),
-            color = MaterialTheme.colorScheme.primary,
+            color = MaterialTheme.colors.primary,
             strokeWidth = 6.dp
         )
     }
